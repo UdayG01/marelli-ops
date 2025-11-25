@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detection Details - Industrial Nut Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Header -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">🔍</div>
+                    <h1 class="text-xl font-bold text-gray-800">Detection Details</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/api/ml/history/" class="text-blue-500 hover:text-blue-600">← Back to History</a>
+                    <a href="/api/ml/logout/" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Detection Summary -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">{{ detection.image_name }}</h2>
+                <p class="text-gray-600">Processed on {{ detection.created_at|date:"M d, Y \a\t H:i" }}</p>
+            </div>
+            
+            <div class="p-6">
+                <!-- Status Banner -->
+                <div class="mb-6 p-4 rounded-lg border-2 
+                    {% if detection.detection_status == 'PASS' %}
+                        bg-green-50 border-green-200
+                    {% elif detection.detection_status == 'FAIL' %}
+                        bg-red-50 border-red-200
+                    {% else %}
+                        bg-yellow-50 border-yellow-200
+                    {% endif %}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="text-2xl">
+                                {% if detection.detection_status == 'PASS' %}✅
+                                {% elif detection.detection_status == 'FAIL' %}❌
+                                {% else %}⚠️{% endif %}
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold 
+                                    {% if detection.detection_status == 'PASS' %}text-green-600
+                                    {% elif detection.detection_status == 'FAIL' %}text-red-600
+                                    {% else %}text-yellow-600{% endif %}">
+                                    {{ detection.production_decision }}
+                                </h3>
+                                <p class="text-gray-700">{{ detection.scenario|title }} Scenario</p>
+                            </div>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium
+                            {% if detection.detection_status == 'PASS' %}bg-green-100 text-green-800
+                            {% elif detection.detection_status == 'FAIL' %}bg-red-100 text-red-800
+                            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                            {{ detection.detection_status }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Detection Metrics -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                    <div class="text-center p-4 bg-gray-50 rounded-lg">
+                        <div class="text-2xl font-bold text-gray-800">{{ detection.total_detected }}</div>
+                        <div class="text-sm text-gray-600">Total Detected</div>
+                    </div>
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <div class="text-2xl font-bold text-green-600">{{ detection.present_nuts }}</div>
+                        <div class="text-sm text-gray-600">Present</div>
+                    </div>
+                    <div class="text-center p-4 bg-red-50 rounded-lg">
+                        <div class="text-2xl font-bold text-red-600">{{ detection.missing_nuts }}</div>
+                        <div class="text-sm text-gray-600">Missing</div>
+                    </div>
+                    <div class="text-center p-4 bg-blue-50 rounded-lg">
+                        <div class="text-2xl font-bold text-blue-600">{{ detection.confidence_score|floatformat:1 }}%</div>
+                        <div class="text-sm text-gray-600">Confidence</div>
+                    </div>
+                </div>
+
+                <!-- Technical Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-3">Technical Details</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Processing Time:</span>
+                                <span class="font-medium">{{ detection.processing_time|floatformat:3 }}s</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">User:</span>
+                                <span class="font-medium">{{ detection.user.get_full_name|default:detection.user.username }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Department:</span>
+                                <span class="font-medium">{{ detection.user.department|default:"Not specified" }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Detection ID:</span>
+                                <span class="font-medium font-mono text-xs">{{ detection.id }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-800 mb-3">Verification Status</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">User Verification:</span>
+                                <span class="px-2 py-1 rounded text-xs font-medium
+                                    {% if detection.user_verification == 'correct' %}bg-green-100 text-green-800
+                                    {% elif detection.user_verification == 'incorrect' %}bg-red-100 text-red-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ detection.user_verification|capfirst }}
+                                </span>
+                            </div>
+                            {% if detection.admin_verified_by %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Admin Review:</span>
+                                <span class="font-medium">{{ detection.admin_verified_by.get_full_name }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Last Updated:</span>
+                                <span class="font-medium">{{ detection.updated_at|date:"M d, H:i" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Feedback -->
+                {% if detection.user_feedback %}
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-blue-800 mb-2">User Feedback</h4>
+                    <p class="text-blue-700">{{ detection.user_feedback }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Admin Notes -->
+                {% if detection.admin_notes and user.is_admin %}
+                <div class="bg-purple-50 p-4 rounded-lg mb-6">
+                    <h4 class="font-semibold text-purple-800 mb-2">Admin Notes</h4>
+                    <p class="text-purple-700">{{ detection.admin_notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- User Verification Form -->
+        {% if detection.user == user and detection.user_verification == 'pending' %}
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Verify Detection Result</h3>
+                <p class="text-gray-600">Please verify if this detection result is correct</p>
+            </div>
+            
+            <div class="p-6">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">
+                            Is this detection result correct?
+                        </label>
+                        <div class="space-y-2">
+                            {{ verification_form.verification }}
+                        </div>
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="{{ verification_form.feedback.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Additional Feedback (Optional)
+                        </label>
+                        {{ verification_form.feedback }}
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            Submit Verification
+                        </button>
+                        <a href="/api/ml/history/" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            Skip for Now
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Raw Detection Data (Admin Only) -->
+        {% if user.is_admin and detection.raw_detection_data %}
+        <div class="bg-white rounded-lg shadow mt-6">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Raw Detection Data</h3>
+                <p class="text-gray-600">Technical details for debugging and analysis</p>
+            </div>
+            
+            <div class="p-6">
+                <pre class="bg-gray-50 p-4 rounded-lg text-xs overflow-x-auto">{{ detection.raw_detection_data|pprint }}</pre>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>System Expiry Management</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .status { padding: 15px; margin: 20px 0; border-radius: 5px; }
+        .status.active { background: #e8f5e8; border: 1px solid #4caf50; color: #2e7d32; }
+        .status.warning { background: #fff3e0; border: 1px solid #ff9800; color: #ef6c00; }
+        .status.expired { background: #ffebee; border: 1px solid #f44336; color: #c62828; }
+        input, button { padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #2196f3; color: white; cursor: pointer; }
+        button:hover { background: #1976d2; }
+        .danger { background: #f44336; }
+        .danger:hover { background: #d32f2f; }
+        .emergency { background: #ffebee; border: 2px solid #f44336; border-radius: 5px; padding: 15px; margin-top: 20px; }
+        .current-time { font-family: monospace; font-size: 18px; padding: 10px; background: #f0f0f0; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕐 System Expiry Management</h1>
+        
+        <div id="status-container">
+            <div class="status" id="current-status">
+                Loading system status...
+            </div>
+        </div>
+        
+        <div class="current-time" id="current-time"></div>
+        
+        <h3>Update Expiry Time</h3>
+        <div>
+            <label>New Expiry Date & Time (India Time):</label><br>
+            <input type="datetime-local" id="new-expiry" style="width: 300px;">
+            <button onclick="updateExpiryTime()">Update Expiry Time</button>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <h3>Quick Actions</h3>
+            <button onclick="extendBy(7)">Extend by 7 days</button>
+            <button onclick="extendBy(30)">Extend by 30 days</button>
+            <button onclick="extendBy(365)">Extend by 1 year</button>
+        </div>
+        
+        <div class="emergency">
+            <h4 style="color: #d32f2f; margin: 0 0 10px 0;">🚨 Emergency Actions</h4>
+            <button onclick="emergencyExtend()" 
+                    style="background: #ff5722; color: white; padding: 12px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                ⚡ Emergency Extend (24 Hours)
+            </button>
+            <button class="danger" onclick="setExpiry(1)" style="margin-left: 10px;">
+                💀 Expire in 1 minute (TEST)
+            </button>
+        </div>
+        
+        <div id="message" style="margin-top: 20px; padding: 10px; border-radius: 5px; display: none;"></div>
+    </div>
+
+    <script>
+        // Update current time every second
+        function updateCurrentTime() {
+            const now = new Date();
+            const options = {
+                timeZone: 'Asia/Kolkata',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            document.getElementById('current-time').textContent = 
+                'Current Time (India): ' + now.toLocaleString('en-GB', options);
+        }
+        
+        // Load system status
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch('/api/ml/system-expiry-status/');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('current-status');
+                
+                if (!data.expiry_enabled) {
+                    statusDiv.className = 'status active';
+                    statusDiv.innerHTML = '✅ System expiry checking is DISABLED';
+                    return;
+                }
+                
+                if (data.expired) {
+                    statusDiv.className = 'status expired';
+                    statusDiv.innerHTML = `💀 SYSTEM EXPIRED<br>Expiry Time: ${data.expiry_datetime}`;
+                } else {
+                    const timeRemaining = data.time_remaining;
+                    if (timeRemaining.days < 7) {
+                        statusDiv.className = 'status warning';
+                        statusDiv.innerHTML = `⚠️ SYSTEM EXPIRES SOON<br>Time Remaining: ${timeRemaining.formatted}<br>Expiry Time: ${data.expiry_datetime}`;
+                    } else {
+                        statusDiv.className = 'status active';
+                        statusDiv.innerHTML = `✅ System Active<br>Time Remaining: ${timeRemaining.formatted}<br>Expiry Time: ${data.expiry_datetime}`;
+                    }
+                }
+                
+            } catch (error) {
+                document.getElementById('current-status').innerHTML = 'Error loading status: ' + error.message;
+            }
+        }
+        
+        // Update expiry time
+        async function updateExpiryTime() {
+            const newExpiry = document.getElementById('new-expiry').value;
+            if (!newExpiry) {
+                showMessage('Please select a date and time', 'error');
+                return;
+            }
+            
+            // Convert datetime-local to the required format
+            const expiryFormatted = newExpiry.replace('T', ' ') + ':00';
+            
+            try {
+                const response = await fetch('/api/ml/update-expiry-time/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        expiry_datetime: expiryFormatted
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`Expiry time updated to ${data.new_expiry}`, 'success');
+                    loadSystemStatus();
+                } else {
+                    showMessage('Error: ' + data.error, 'error');
+                }
+                
+            } catch (error) {
+                showMessage('Error updating expiry time: ' + error.message, 'error');
+            }
+        }
+        
+        // Emergency extend
+        async function emergencyExtend() {
+            if (!confirm('EMERGENCY EXTENSION: This will extend the system by 24 hours. Continue?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/ml/emergency-extend/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showMessage(`Emergency extension successful! New expiry: ${data.new_expiry}`, 'success');
+                    loadSystemStatus();
+                } else {
+                    showMessage('Emergency extension failed: ' + data.error, 'error');
+                }
+                
+            } catch (error) {
+                showMessage('Emergency extension error: ' + error.message, 'error');
+            }
+        }
+        
+        // Quick extend functions
+        function extendBy(days) {
+            const now = new Date();
+            now.setDate(now.getDate() + days);
+            const formatted = now.toISOString().slice(0, 16);
+            document.getElementById('new-expiry').value = formatted;
+        }
+        
+        function setExpiry(minutes) {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + minutes);
+            const formatted = now.toISOString().slice(0, 16);
+            document.getElementById('new-expiry').value = formatted;
+        }
+        
+        // Show message
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.style.display = 'block';
+            messageDiv.style.background = type === 'success' ? '#e8f5e8' : '#ffebee';
+            messageDiv.style.color = type === 'success' ? '#2e7d32' : '#c62828';
+            messageDiv.style.border = type === 'success' ? '1px solid #4caf50' : '1px solid #f44336';
+            
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Initialize
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 1000);
+        loadSystemStatus();
+        setInterval(loadSystemStatus, 30000); // Refresh every 30 seconds
+    </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!-- This should be placed in templates/ml_api/image_source_selection.html -->
+<!-- Add Camera option to your existing image source selection page -->
+
+<!-- Update your existing image source selection HTML to include this camera option: -->
+
+<div class="source-option camera-option">
+    <div class="source-icon">📷</div>
+    <h3>Industrial Camera</h3>
+    <p>Capture image using Hikrobot industrial camera</p>
+    <div class="source-features">
+        <span class="feature">✓ Live Preview</span>
+        <span class="feature">✓ High Resolution</span>
+        <span class="feature">✓ Auto Processing</span>
+    </div>
+    <button class="source-btn btn-camera" onclick="selectCameraSource()">
+        Use Camera
+    </button>
+</div>
+
+<!-- Add this JavaScript function to your existing script section: -->
+<script>
+function selectCameraSource() {
+    const imageId = '{{ image_id }}';
+    
+    if (!imageId) {
+        alert('No Image ID provided. Please start from the beginning.');
+        window.location.href = '/api/ml/image-id/';
+        return;
+    }
+    
+    // Redirect to camera capture page
+    window.location.href = `/api/ml/camera-capture/?image_id=${imageId}`;
+}
+</script>
+
+<!-- Add this CSS to style the camera option: -->
+<style>
+.camera-option {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.camera-option .source-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+}
+
+.btn-camera {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-camera:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px);
+}
+</style>

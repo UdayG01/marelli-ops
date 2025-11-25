@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industrial Nut Detection - Single Image Workflow</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .workflow-container {
+            padding: 30px;
+        }
+        
+        .workflow-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        .workflow-steps::before {
+            content: '';
+            position: absolute;
+            top: 25px;
+            left: 50px;
+            right: 50px;
+            height: 2px;
+            background: #e0e0e0;
+            z-index: 1;
+        }
+        
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+        
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            color: #999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .step.active .step-number {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .step.completed .step-number {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .main-content {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        
+        .input-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .input-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .image-source-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .source-button {
+            padding: 30px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .source-button:hover {
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .source-button.selected {
+            border-color: #4CAF50;
+            background: #f0f8f0;
+        }
+        
+        .source-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #666;
+        }
+        
+        .source-button.selected .source-icon {
+            color: #4CAF50;
+        }
+        
+        .upload-area {
+            border: 3px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        .upload-area:hover {
+            border-color: #4CAF50;
+            background: #f0f8f0;
+        }
+        
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: #f0f8f0;
+        }
+        
+        .camera-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-camera {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .btn-camera:hover {
+            background: #1976D2;
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        .processing-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results-container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .result-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .result-status.pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .result-status.fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .nut-results {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .nut-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+        
+        .nut-card.present {
+            border-color: #28a745;
+            background: #d4edda;
+        }
+        
+        .nut-card.missing {
+            border-color: #dc3545;
+            background: #f8d7da;
+        }
+        
+        .nut-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .nut-status {
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        .confidence {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .qr-section {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            text-align: center;
+            color: #666;
+        }
+        
+        .qr-placeholder {
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Industrial Nut Detection System</h1>
+            <p>Single Image Workflow - Auto Processing</p>
+            <div class="user-info">
+                Welcome, <strong>{{ user.username }}</strong> ({{ user.role|title }})
+                <a href="{% url 'ml_api:logout' %}" style="color: #ffd700; margin-left: 15px;">Logout</a>
+            </div>
+        </div>
+        
+        <div class="workflow-container">
+            <!-- Workflow Steps -->
+            <div class="workflow-steps">
+                <div class="step active" id="step-1">
+                    <div class="step-number">1</div>
+                    <div class="step-title">Image ID Entry</div>
+                </div>
+                <div class="step" id="step-2">
+                    <div class="step-number">2</div>
+                    <div class="step-title">Image Source</div>
+                </div>
+                <div class="step" id="step-3">
+                    <div class="step-number">3</div>
+                    <div class="step-title">Auto Processing</div>
+                </div>
+                <div class="step" id="step-4">
+                    <div class="step-number">4</div>
+                    <div class="step-title">Results & Save</div>
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="main-content">
+                
+                <!-- Step 1: Image ID Entry -->
+                <div class="input-section active" id="section-1">
+                    <h2>🏷️ Step 1: Enter Image ID</h2>
+                    <div class="form-group">
+                        <label for="imageId">Image ID (Manual Entry):</label>
+                        <input type="text" id="imageId" placeholder="Enter Image ID (e.g., IMG_001, BATCH_123)" maxlength="50">
+                    </div>
+                    
+                    <div class="qr-section">
+                        <div class="qr-placeholder">📱 QR Scanner (RS-232)</div>
+                        <p>QR Scanner will be integrated here for automatic ID capture via USB/RS-232 connection</p>
+                        <button class="btn btn-secondary" disabled>Connect Scanner</button>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="proceedToImageSource()" id="proceedBtn" disabled>
+                            Proceed to Image Source →
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 2: Image Source Selection -->
+                <div class="input-section" id="section-2">
+                    <h2>📷 Step 2: Select Image Source</h2>
+                    
+                    <div class="image-source-buttons">
+                        <div class="source-button" onclick="selectImageSource('upload')" id="upload-source">
+                            <div class="source-icon">📁</div>
+                            <h3>Upload Image</h3>
+                            <p>Select image file from computer</p>
+                        </div>
+                        
+                        <div class="source-button" onclick="selectImageSource('camera')" id="camera-source">
+                            <div class="source-icon">📷</div>
+                            <h3>Hikrobot Camera</h3>
+                            <p>Capture image from industrial camera</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Upload Section -->
+                    <div id="upload-section" class="hidden">
+                        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                            <div>📁 Click to select image or drag and drop</div>
+                            <div style="font-size: 0.9rem; color: #666; margin-top: 10px;">
+                                Supported formats: JPG, PNG, BMP
+                            </div>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    </div>
+                    
+                    <!-- Camera Section -->
+                    <div id="camera-section" class="hidden">
+                        <div class="camera-controls">
+                            <button class="btn btn-camera" onclick="connectCamera()">Connect Camera</button>
+                            <button class="btn btn-primary" onclick="captureImage()" id="captureBtn" disabled>Capture Image</button>
+                        </div>
+                        <div id="camera-status" style="margin-top: 15px; text-align: center; color: #666;">
+                            Camera Status: Disconnected
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" onclick="goBackToStep(1)">← Back</button>
+                        <button class="btn btn-primary" onclick="startProcessing()" id="processBtn" disabled>
+                            Start Auto Processing →
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Step 3: Processing -->
+                <div class="input-section" id="section-3">
+                    <h2>⚙️ Step 3: Auto Processing</h2>
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="spinner"></div>
+                        <h3>Processing Image with YOLOv8 Model...</h3>
+                        <p>Detecting nut1, nut2, nut3, nut4 status</p>
+                        <div id="processing-progress">Initializing...</div>
+                    </div>
+                </div>
+                
+                <!-- Step 4: Results -->
+                <div class="input-section" id="section-4">
+                    <h2>📊 Step 4: Detection Results</h2>
+                    <div id="results-container"></div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="saveAndNext()">✅ Save & Next Image</button>
+                        <button class="btn btn-secondary" onclick="viewHistory()">📋 View History</button>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- Processing Overlay -->
+    <div class="processing-overlay" id="processing-overlay">
+        <div class="processing-content">
+            <div class="spinner"></div>
+            <h3>Processing...</h3>
+            <p>Please wait while we analyze your image</p>
+        </div>
+    </div>
+    
+    <script>
+        let currentStep = 1;
+        let selectedImageSource = null;
+        let selectedImage = null;
+        let imageId = '';
+        let processingResult = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            // Image ID input
+            document.getElementById('imageId').addEventListener('input', function() {
+                const value = this.value.trim();
+                const proceedBtn = document.getElementById('proceedBtn');
+                
+                if (value.length >= 3) {
+                    proceedBtn.disabled = false;
+                    imageId = value;
+                } else {
+                    proceedBtn.disabled = true;
+                }
+            });
+            
+            // File input
+            document.getElementById('fileInput').addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    selectedImage = this.files[0];
+                    document.getElementById('processBtn').disabled = false;
+                    
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Could add image preview here
+                    };
+                    reader.readAsDataURL(selectedImage);
+                }
+            });
+            
+            // Drag and drop
+            const uploadArea = document.querySelector('.upload-area');
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    selectedImage = files[0];
+                    document.getElementById('processBtn').disabled = false;
+                }
+            });
+        }
+        
+        function proceedToImageSource() {
+            currentStep = 2;
+            updateWorkflowSteps();
+            showSection(2);
+        }
+        
+        function selectImageSource(source) {
+            selectedImageSource = source;
+            
+            // Reset button states
+            document.querySelectorAll('.source-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Hide all sections
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('camera-section').classList.add('hidden');
+            
+            if (source === 'upload') {
+                document.getElementById('upload-source').classList.add('selected');
+                document.getElementById('upload-section').classList.remove('hidden');
+            } else if (source === 'camera') {
+                document.getElementById('camera-source').classList.add('selected');
+                document.getElementById('camera-section').classList.remove('hidden');
+            }
+        }
+        
+        function connectCamera() {
+            // Simulate camera connection
+            fetch('/camera/connect/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('camera-status').textContent = 'Camera Status: Connected ✅';
+                    document.getElementById('captureBtn').disabled = false;
+                } else {
+                    document.getElementById('camera-status').textContent = 'Camera Status: Connection Failed ❌';
+                }
+            })
+            .catch(error => {
+                console.error('Camera connection error:', error);
+                document.getElementById('camera-status').textContent = 'Camera Status: Error';
+            });
+        }
+        
+        function captureImage() {
+            // Show processing
+            document.getElementById('processing-overlay').style.display = 'flex';
+            
+            // Capture image from Hikrobot camera
+            fetch('/camera/capture/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    image_id: imageId,
+                    session_name: `Single_Capture_${imageId}`
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('processing-overlay').style.display = 'none';
+                
+                if (data.success) {
+                    selectedImage = data.image_path;
+                    document.getElementById('processBtn').disabled = false;
+                    alert('✅ Image captured successfully!');
+                } else {
+                    alert('❌ Failed to capture image: ' + data.error);
+                }
+            })
+            .catch(error => {
+                document.getElementById('processing-overlay').style.display = 'none';
+                console.error('Capture error:', error);
+                alert('❌ Camera capture failed');
+            });
+        }
+        
+        function startProcessing() {
+            currentStep = 3;
+            updateWorkflowSteps();
+            showSection(3);
+            
+            // Start auto processing
+            setTimeout(() => {
+                processImage();
+            }, 1000);
+        }
+        
+        function processImage() {
+            const formData = new FormData();
+            
+            if (selectedImageSource === 'upload') {
+                formData.append('image', selectedImage);
+            } else {
+                formData.append('image_path', selectedImage);
+            }
+            
+            formData.append('image_id', imageId);
+            formData.append('auto_process', 'true');
+            
+            // Update processing status
+            document.getElementById('processing-progress').textContent = 'Analyzing image with YOLOv8...';
+            
+            fetch('/api/ml/process-single-image/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    processingResult = data;
+                    currentStep = 4;
+                    updateWorkflowSteps();
+                    showSection(4);
+                    displayResults(data);
+                } else {
+                    alert('❌ Processing failed: ' + data.error);
+                    goBackToStep(2);
+                }
+            })
+            .catch(error => {
+                console.error('Processing error:', error);
+                alert('❌ Processing failed');
+                goBackToStep(2);
+            });
+        }
+        
+        function displayResults(data) {
+            const container = document.getElementById('results-container');
+            
+            const overallStatus = data.business_logic.production_decision;
+            const statusClass = overallStatus === 'PASS' ? 'pass' : 'fail';
+            
+            const html = `
+                <div class="result-header">
+                    <h3>Image ID: ${data.image_id}</h3>
+                    <div class="result-status ${statusClass}">
+                        ${overallStatus === 'PASS' ? '✅ PASS' : '❌ FAIL'}
+                    </div>
+                </div>
+                
+                <div class="nut-results">
+                    ${Object.entries(data.nut_results).map(([nut, result]) => `
+                        <div class="nut-card ${result.status.toLowerCase()}">
+                            <div class="nut-title">${nut.toUpperCase()}</div>
+                            <div class="nut-status">
+                                ${result.status === 'PRESENT' ? '✅ PRESENT' : '❌ MISSING'}
+                            </div>
+                            <div class="confidence">
+                                Confidence: ${(result.confidence * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                    <h4>📊 Summary</h4>
+                    <p><strong>Present:</strong> ${data.business_logic.present_count}/4 nuts</p>
+                    <p><strong>Missing:</strong> ${data.business_logic.missing_count}/4 nuts</p>
+                    <p><strong>Quality Score:</strong> ${data.business_logic.quality_score}%</p>
+                    <p><strong>Processing Time:</strong> ${data.processing_time_seconds.toFixed(2)}s</p>
+                </div>
+                
+                ${data.auto_saved ? `
+                    <div class="success-message">
+                        ✅ Results automatically saved to database
+                    </div>
+                ` : ''}
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        function saveAndNext() {
+            // Reset for next image
+            resetWorkflow();
+            
+            // Show success message briefly
+            const container = document.querySelector('.main-content');
+            container.innerHTML = `
+                <div class="success-message">
+                    <h3>✅ Results Saved Successfully!</h3>
+                    <p>Image ID: ${imageId} processed and saved</p>
+                    <p>Ready for next image...</p>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                resetWorkflow();
+            }, 2000);
+        }
+        
+        function resetWorkflow() {
+            currentStep = 1;
+            selectedImageSource = null;
+            selectedImage = null;
+            imageId = '';
+            processingResult = null;
+            
+            // Reset form
+            document.getElementById('imageId').value = '';
+            document.getElementById('proceedBtn').disabled = true;
+            document.getElementById('processBtn').disabled = true;
+            document.getElementById('captureBtn').disabled = true;
+            
+            // Reset camera status
+            document.getElementById('camera-status').textContent = 'Camera Status: Disconnected';
+            
+            // Reset sections
+            document.querySelectorAll('.source-button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            document.getElementById('upload-section').classList.add('hidden');
+            document.getElementById('camera-section').classList.add('hidden');
+            
+            updateWorkflowSteps();
+            showSection(1);
+        }
+        
+        function viewHistory() {
+            window.location.href = '/api/ml/history/';
+        }
+        
+        function goBackToStep(step) {
+            currentStep = step;
+            updateWorkflowSteps();
+            showSection(step);
+        }
+        
+        function updateWorkflowSteps() {
+            for (let i = 1; i <= 4; i++) {
+                const step = document.getElementById(`step-${i}`);
+                step.classList.remove('active', 'completed');
+                
+                if (i < currentStep) {
+                    step.classList.add('completed');
+                } else if (i === currentStep) {
+                    step.classList.add('active');
+                }
+            }
+        }
+        
+        function showSection(sectionNumber) {
+            // Hide all sections
+            document.querySelectorAll('.input-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show current section
+            document.getElementById(`section-${sectionNumber}`).classList.add('active');
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Auto-advance workflow simulation for demo
+        function simulateQRScan() {
+            const randomId = `QR_${Date.now().toString().substr(-6)}`;
+            document.getElementById('imageId').value = randomId;
+            imageId = randomId;
+            document.getElementById('proceedBtn').disabled = false;
+        }
+    </script>
+</body>
+</html>

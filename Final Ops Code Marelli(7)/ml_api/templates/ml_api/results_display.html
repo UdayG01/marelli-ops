@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspection Results</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #333;
+            overflow: hidden;
+        }
+        
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+        
+        .mini-header {
+            background: linear-gradient(45deg, #FF6B35, #F7931E);
+            color: white;
+            padding: 4px 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .mini-header h1 {
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        
+        .result-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .image-id {
+            font-size: 1.5rem;
+            font-weight: bold;
+            font-family: monospace;
+        }
+        
+        .result-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .result-pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .result-fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .dashboard-link {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background 0.3s ease;
+            margin-right: 10px;
+        }
+        
+        .dashboard-link:hover {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .images-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            padding: 4px;
+        }
+
+        .image-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .image-title {
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: 600;
+            padding: 3px;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        .image-frame {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+
+        .image-frame.results {
+            border-color: #4CAF50;
+            background: #f0f8f0;
+        }
+
+        .image-frame img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block !important;
+        }
+
+        .image-placeholder {
+            padding: 20px;
+            color: #666;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+        
+        .mini-footer {
+            background: #f8f9fa;
+            padding: 3px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: #4CAF50;
+            border: 2px solid #4CAF50;
+        }
+        
+        .btn-override {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        
+        .verification-badge {
+            position: fixed;
+            top: 5px;
+            left: 5px;
+            background: #FF1744;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            z-index: 9999;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+        }
+        
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            min-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .modal h3 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+        
+        .modal-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .modal-btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .modal-btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        
+        .modal-btn-secondary {
+            background: #666;
+            color: white;
+        }
+        
+        .status-buttons {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .status-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            margin: 0 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .status-btn-ok {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .status-btn-ng {
+            background: #f44336;
+            color: white;
+        }
+        
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .success-message {
+            color: green;
+            text-align: center;
+            margin-top: 10px;
+        }
+        
+        .status-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        /* Auto-redirect timer styles */
+        .auto-redirect-timer {
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .auto-redirect-timer.paused {
+            background: rgba(255, 152, 0, 0.9);
+        }
+        
+        .timer-circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .timer-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .timer-btn {
+            background: rgba(255,255,255,0.3);
+            border: none;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.2s;
+        }
+        
+        .timer-btn:hover {
+            background: rgba(255,255,255,0.5);
+        }
+        
+        .next-inspection-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .next-inspection-btn.auto-mode {
+            background: linear-gradient(45deg, #4CAF50, #66BB6A);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="mini-header">
+            <h1>📊 Inspection Results</h1>
+            <div class="result-info">
+                <a href="{% if user.role == 'admin' %}{% url 'ml_api:simple_admin_dashboard' %}{% else %}{% url 'ml_api:simple_user_dashboard' %}{% endif %}" class="dashboard-link">📊 Dashboard</a>
+                <span class="image-id">DMC number: {{ image_id }}</span>
+                <div class="result-badge {% if inspection.overall_result == 'PASS' %}result-pass{% else %}result-fail{% endif %}">
+                    {% if inspection.overall_result == 'PASS' %}✅ PASS{% else %}❌ FAIL{% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="images-grid">
+            <div class="image-container">
+                <div class="image-title">Original Image</div>
+                <div class="image-frame">
+                    {% if original_image_path %}
+                        <img src="{{ original_image_path }}" 
+                             alt="Original Image" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    {% else %}
+                        <img src="/media/inspections/original/{{ inspection.filename }}" 
+                             alt="Original Image" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    {% endif %}
+                    <div class="image-placeholder" style="display: none;">
+                        📷 Original image not available
+                    </div>
+                </div>
+            </div>
+            
+            <div class="image-container">
+                <div class="image-title">Detection Results</div>
+                <div class="image-frame results">
+                    {% if annotated_image_path %}
+                        <img src="{{ annotated_image_path }}" 
+                             alt="Detection Results"
+                             onload="this.style.display='block'; document.getElementById('result-placeholder').style.display='none';"
+                             onerror="tryAlternativePaths();">
+                    {% else %}
+                        <img id="result-image" 
+                             alt="Detection Results"
+                             onload="this.style.display='block'; document.getElementById('result-placeholder').style.display='none';"
+                             onerror="tryAlternativePaths();">
+                    {% endif %}
+                    <div class="image-placeholder" id="result-placeholder">
+                        🔍 Loading result image...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 🆕 ENHANCED: Mini-footer with Retry functionality -->
+        <div class="mini-footer">
+            <!-- 🆕 NEW: Show Retry button only for FAIL results -->
+            {% if inspection.overall_result == 'FAIL' %}
+                <button onclick="showRetryModal()" class="btn" style="background: #ff9800; color: white;">
+                    🔄 Retry Image
+                </button>
+            {% endif %}
+            
+            <button onclick="finalizeAndRedirectToImageIdEntry()" 
+                    class="btn btn-primary next-inspection-btn" 
+                    id="nextInspectionBtn">
+                🔄 Next Inspection
+            </button>
+            {% if user.role == 'admin' %}
+                <button onclick="showOverrideModal()" class="btn btn-override">🔒 Override Status</button>
+            {% endif %}
+
+            <button onclick="toggleAutoRedirect()" class="btn btn-outline" id="toggleAutoBtn">
+                ⏰ Auto Mode: ON
+            </button>
+            
+        </div>
+    </div>
+
+    <!-- Auto-redirect timer -->
+    <div id="autoRedirectTimer" class="auto-redirect-timer" style="display: none;">
+        <div class="timer-circle" id="timerCircle">3</div>
+        <div>
+            <div>Auto redirect in <span id="timerSeconds">3</span>s</div>
+            <div style="font-size: 0.8rem; opacity: 0.9;">Next Inspection</div>
+        </div>
+        <div class="timer-controls">
+            <button onclick="pauseTimer()" class="timer-btn" id="pauseBtn">⏸️</button>
+            <button onclick="cancelTimer()" class="timer-btn">❌</button>
+        </div>
+    </div>
+
+    <!-- Override Authentication Modal -->
+    <div id="overrideModal" class="modal">
+        <div class="modal-content">
+            <h3>🔒 Override Authentication</h3>
+            <form id="overrideForm">
+                <div class="form-group">
+                    <label for="overrideUsername">Username:</label>
+                    <input type="text" id="overrideUsername" required>
+                </div>
+                <div class="form-group">
+                    <label for="overridePassword">Password:</label>
+                    <input type="password" id="overridePassword" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="modal-btn modal-btn-primary">Authenticate</button>
+                    <button type="button" onclick="closeOverrideModal()" class="modal-btn modal-btn-danger">Cancel</button>
+                </div>
+            </form>
+            <div id="overrideError" class="error-message"></div>
+        </div>
+    </div>
+
+    <!-- Status Change Modal -->
+    <div id="statusModal" class="modal">
+        <div class="modal-content">
+            <h3>🔄 Change Status</h3>
+            <div class="status-info">
+                <p>Current Status: <strong id="currentStatus">{% if inspection.overall_result == 'PASS' %}OK{% else %}NG{% endif %}</strong></p>
+                <p>Image ID: <strong>{{ image_id }}</strong></p>
+            </div>
+            <div class="status-buttons">
+                <button onclick="changeStatus('OK')" class="status-btn status-btn-ok">✅ Mark as OK</button>
+                <button onclick="changeStatus('NG')" class="status-btn status-btn-ng">❌ Mark as NG</button>
+            </div>
+            <div class="modal-buttons">
+                <button onclick="closeStatusModal()" class="modal-btn modal-btn-secondary">Cancel</button>
+            </div>
+            <div id="statusChangeResult"></div>
+        </div>
+    </div>
+
+    <!-- 🆕 NEW: Retry Confirmation Modal -->
+    <div id="retryModal" class="modal">
+        <div class="modal-content">
+            <h3>🔄 Retry Failed Image</h3>
+            <div class="status-info">
+                <p><strong>Image ID:</strong> {{ image_id }}</p>
+                <p><strong>Current Status:</strong> <span style="color: #721c24; font-weight: bold;">❌ FAILED</span></p>
+                <p style="margin-top: 15px; color: #666;">
+                    This will generate a new image ID with suffix (e.g., {{ image_id }}_1) and 
+                        redirect you to capture a new image. All original data will be preserved.
+                </p>
+            </div>
+            
+            <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <strong>ℹ️ Note:</strong> Original data will be preserved. A new image ID with suffix will be created for the retry attempt.
+            </div>
+            
+            <div class="modal-buttons">
+                <button onclick="confirmRetry()" class="modal-btn" style="background: #ff9800; color: white;">
+                    🔄 Yes, Retry Image
+                </button>
+                <button onclick="closeRetryModal()" class="modal-btn modal-btn-secondary">
+                    ❌ Cancel
+                </button>
+            </div>
+            
+            <div id="retryStatus" style="margin-top: 15px; text-align: center; display: none;">
+                <div style="color: #ff9800; font-weight: bold;">🔄 Processing retry...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let currentUserRole = '';
+    let inspectionId = '';
+    
+    // Variables for finalization
+    const currentImageId = '{{ image_id }}';
+    const currentOverallResult = '{{ inspection.overall_result }}';
+    
+    // Auto-redirect functionality
+    let autoRedirectEnabled = true;
+    let countdownTimer = null;
+    let remainingSeconds = 2;
+    let isPaused = false;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const resultImg = document.getElementById('result-image');
+        const placeholder = document.getElementById('result-placeholder');
+        
+        // **FIXED: Use the server-provided path first**
+        const serverProvidedPath = '{{ annotated_image_path|escapejs }}';
+        const imageId = '{{ image_id|escapejs }}';
+        const resultFolder = '{{ result_folder|escapejs }}'; // OK or NG
+        
+        console.log('[IMAGE] Server provided path:', serverProvidedPath);
+        console.log('[IMAGE] Image ID:', imageId);
+        console.log('[IMAGE] Result folder:', resultFolder);
+        
+        // If server provided a path, use it
+        if (serverProvidedPath && resultImg) {
+            resultImg.src = serverProvidedPath;
+            console.log('[IMAGE] Using server-provided path:', serverProvidedPath);
+        } else if (resultImg && imageId) {
+            // Fallback to trying alternative paths
+            tryAlternativePaths();
+        }
+        
+        // Start auto-redirect timer
+        if (autoRedirectEnabled) {
+            startAutoRedirectTimer();
+        }
+    });
+    
+    function tryAlternativePaths() {
+        const resultImg = document.getElementById('result-image');
+        const placeholder = document.getElementById('result-placeholder');
+        const imageId = '{{ image_id|escapejs }}';
+        const resultFolder = '{{ result_folder|escapejs }}';
+        
+        if (!resultImg || !imageId) return;
+        
+        // **UPDATED: Paths based on actual storage structure**
+        const possiblePaths = [
+            // Primary enhanced storage paths
+            `/media/inspections/${imageId}/${resultFolder}/annotated/`,
+            `/media/inspections/${imageId}/${resultFolder}/`,
+            
+            // Alternative enhanced storage paths
+            `/media/inspections/${imageId}/annotated/`,
+            `/media/inspections/${imageId}/`,
+            
+            // Triggered inspection paths
+            `/media/inspections/triggered_inspections/${imageId}/annotated/`,
+            `/media/inspections/triggered_inspections/${imageId}/`,
+            `/media/inspections/triggered_image/${imageId}/${resultFolder}/annotated/`,
+            
+            // Legacy paths
+            `/media/inspections/results/`,
+            `/media/inspections/annotated/`,
+        ];
+        
+        // **UPDATED: Filename patterns to try**
+        const filenamePatterns = [
+            `${imageId}_annotated.jpg`,
+            `${imageId}_result.jpg`,
+            `${imageId}_processed.jpg`,
+            `${imageId}_detection.jpg`,
+            `annotated_${imageId}.jpg`,
+            `result_${imageId}.jpg`,
+            // Triggered capture patterns
+            `triggered_capture_${imageId.replace('triggered_capture_', '')}_annotated.jpg`,
+            `triggered_capture_${imageId.replace('triggered_capture_', '')}_result.jpg`,
+        ];
+        
+        let pathIndex = 0;
+        let patternIndex = 0;
+        
+        function tryNextPath() {
+            if (pathIndex < possiblePaths.length) {
+                if (patternIndex < filenamePatterns.length) {
+                    const currentPath = possiblePaths[pathIndex] + filenamePatterns[patternIndex];
+                    console.log(`[IMAGE] Trying: ${currentPath}`);
+                    
+                    resultImg.onload = function() {
+                        console.log(`[IMAGE] ✅ Successfully loaded: ${currentPath}`);
+                        this.style.display = 'block';
+                        placeholder.style.display = 'none';
+                    };
+                    
+                    resultImg.onerror = function() {
+                        console.log(`[IMAGE] ❌ Failed to load: ${currentPath}`);
+                        patternIndex++;
+                        if (patternIndex >= filenamePatterns.length) {
+                            patternIndex = 0;
+                            pathIndex++;
+                        }
+                        
+                        if (pathIndex < possiblePaths.length) {
+                            setTimeout(tryNextPath, 50);
+                        } else {
+                            console.log('[IMAGE] ❌ All paths failed');
+                            this.style.display = 'none';
+                            placeholder.style.display = 'block';
+                            placeholder.innerHTML = `
+                                🔍 Result image not available<br>
+                                <small>Expected in: ${resultFolder} folder for ${imageId}</small><br>
+                                <small>Path: /media/inspections/${imageId}/${resultFolder}/annotated/</small>
+                            `;
+                        }
+                    };
+                    
+                    resultImg.src = currentPath;
+                }
+            }
+        }
+        
+        // Start trying paths
+        tryNextPath();
+    }
+    
+    // 🆕 ENHANCED: Auto-redirect logic for failed images
+    function startAutoRedirectTimer() {
+        if (!autoRedirectEnabled) return;
+        
+        // 🆕 NEW: Check if this is a failed image
+        const isFailed = currentOverallResult === 'FAIL';
+        
+        if (isFailed) {
+            console.log('⏸️ Auto-redirect paused for failed image - waiting for user action');
+            
+            // Show a different message for failed images
+            document.getElementById('autoRedirectTimer').style.display = 'flex';
+            document.getElementById('autoRedirectTimer').style.background = 'rgba(244, 67, 54, 0.9)';
+            document.getElementById('timerCircle').textContent = '❌';
+            document.getElementById('timerSeconds').textContent = 'PAUSED';
+            
+            const timerContent = document.querySelector('#autoRedirectTimer > div:nth-child(2)');
+            timerContent.innerHTML = `
+                <div>Failed Image - Auto-redirect paused</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">Choose: Retry or Next Inspection</div>
+            `;
+            
+            return; // Don't start countdown for failed images
+        }
+        
+        // Normal auto-redirect for passed images
+        remainingSeconds = 2;
+        isPaused = false;
+        updateTimerDisplay();
+        
+        // Show timer
+        document.getElementById('autoRedirectTimer').style.display = 'flex';
+        document.getElementById('nextInspectionBtn').classList.add('auto-mode');
+        
+        console.log('🕐 Auto-redirect timer started (3 seconds)');
+        
+        // Start countdown
+        countdownTimer = setInterval(() => {
+            if (!isPaused) {
+                remainingSeconds--;
+                updateTimerDisplay();
+                
+                if (remainingSeconds <= 0) {
+                    // Auto-redirect to next inspection
+                    clearInterval(countdownTimer);
+                    triggerNextInspection();
+                }
+            }
+        }, 1000);
+    }
+    
+    function updateTimerDisplay() {
+        document.getElementById('timerSeconds').textContent = remainingSeconds;
+        document.getElementById('timerCircle').textContent = remainingSeconds;
+        
+        // Change color as timer gets close to zero
+        const timerElement = document.getElementById('autoRedirectTimer');
+        if (remainingSeconds <= 1 && remainingSeconds > 0) {
+            timerElement.style.background = 'rgba(255, 152, 0, 0.9)'; // Orange
+        } else if (remainingSeconds <= 1) {
+            timerElement.style.background = 'rgba(244, 67, 54, 0.9)'; // Red
+        } else {
+            timerElement.style.background = 'rgba(76, 175, 80, 0.9)'; // Green
+        }
+        
+        if (isPaused) {
+            timerElement.classList.add('paused');
+        } else {
+            timerElement.classList.remove('paused');
+        }
+    }
+    
+    async function finalizeAndRedirectToImageIdEntry() {
+        try {
+            console.log(`🔄 Finalizing inspection before redirect: ${currentImageId} -> ${currentOverallResult}`);
+            
+            // 🆕 NEW: Send FAIL results to Node-RED when "Next Inspection" is clicked
+            if (currentOverallResult === 'FAIL') {
+                try {
+                    console.log(`[NODE-RED] 📤 Sending FAIL result to Node-RED: ${currentImageId}`);
+                    
+                    const nodeRedResponse = await fetch(`/api/ml/send-fail-to-node-red/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            image_id: currentImageId,
+                            overall_result: currentOverallResult
+                        })
+                    });
+                    
+                    const nodeRedData = await nodeRedResponse.json();
+                    
+                    if (nodeRedData.success) {
+                        console.log(`[NODE-RED] ✅ FAIL result sent to Node-RED successfully`);
+                    } else {
+                        console.log(`[NODE-RED] ❌ Failed to send FAIL result to Node-RED: ${nodeRedData.message}`);
+                    }
+                    
+                } catch (error) {
+                    console.log(`[NODE-RED] ❌ Error sending FAIL result to Node-RED: ${error.message}`);
+                    // Continue with redirect even if Node-RED fails
+                }
+            }
+            
+            // Check if this inspection exists in triggered_inspections directory
+            // This is a more reliable way to detect triggered inspections than checking image_id format
+            try {
+                const checkResponse = await fetch(`/api/ml/finalize-triggered-inspection/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        image_id: currentImageId,
+                        overall_result: currentOverallResult
+                    })
+                });
+                
+                const data = await checkResponse.json();
+                
+                if (data.success) {
+                    console.log(`✅ Triggered inspection finalized: ${data.final_location}`);
+                    // Could show a brief notification here if needed
+                } else {
+                    console.log(`📋 Manual inspection or finalization not needed: ${data.error}`);
+                    // This is normal for manual inspections
+                }
+            } catch (error) {
+                console.log(`📋 Finalization check failed (likely manual inspection): ${error.message}`);
+                // This is normal for manual inspections
+            }
+            
+            // Redirect to image_id_entry regardless of finalization result
+            window.location.href = "{% url 'ml_api:image_id_entry' %}";
+            
+        } catch (error) {
+            console.error('Finalization error:', error);
+            
+            // Still redirect even if finalization fails
+            window.location.href = "{% url 'ml_api:image_id_entry' %}";
+        }
+    }
+    
+    function pauseTimer() {
+        isPaused = !isPaused;
+        const pauseBtn = document.getElementById('pauseBtn');
+        pauseBtn.textContent = isPaused ? '▶️' : '⏸️';
+        
+        console.log(isPaused ? '⏸️ Auto-redirect paused' : '▶️ Auto-redirect resumed');
+    }
+    
+    function cancelTimer() {
+        if (countdownTimer) {
+            clearInterval(countdownTimer);
+            countdownTimer = null;
+        }
+        
+        document.getElementById('autoRedirectTimer').style.display = 'none';
+        document.getElementById('nextInspectionBtn').classList.remove('auto-mode');
+        
+        console.log('❌ Auto-redirect cancelled');
+    }
+    
+    function toggleAutoRedirect() {
+        autoRedirectEnabled = !autoRedirectEnabled;
+        const toggleBtn = document.getElementById('toggleAutoBtn');
+        
+        if (autoRedirectEnabled) {
+            toggleBtn.textContent = '⏰ Auto Mode: ON';
+            toggleBtn.className = 'btn btn-outline';
+            startAutoRedirectTimer();
+            console.log('✅ Auto-redirect enabled');
+        } else {
+            toggleBtn.textContent = '⏰ Auto Mode: OFF';
+            toggleBtn.className = 'btn btn-override';
+            cancelTimer();
+            console.log('❌ Auto-redirect disabled');
+        }
+    }
+    
+    function triggerNextInspection() {
+        console.log('🔄 Auto-redirecting to next inspection...');
+        
+        // Visual feedback
+        document.getElementById('timerCircle').textContent = '✓';
+        document.getElementById('timerSeconds').textContent = '0';
+        
+        // Add flash effect
+        const timer = document.getElementById('autoRedirectTimer');
+        timer.style.background = 'rgba(76, 175, 80, 1)';
+        timer.style.transform = 'scale(1.1)';
+        
+        setTimeout(() => {
+            // Use the new finalization function instead of direct redirect
+            finalizeAndRedirectToImageIdEntry();
+        }, 500);
+    }
+
+    function showOverrideModal() {
+        document.getElementById('overrideModal').style.display = 'block';
+        // Auto-pause timer when modal opens
+        if (countdownTimer && !isPaused) {
+            pauseTimer();
+        }
+    }
+
+    function closeOverrideModal() {
+        document.getElementById('overrideModal').style.display = 'none';
+        document.getElementById('overrideError').style.display = 'none';
+        document.getElementById('overrideForm').reset();
+        // Timer will resume automatically if it was running
+    }
+
+    function closeStatusModal() {
+        document.getElementById('statusModal').style.display = 'none';
+        document.getElementById('statusChangeResult').innerHTML = '';
+    }
+
+    // 🆕 NEW: Retry functionality functions
+    function showRetryModal() {
+        document.getElementById('retryModal').style.display = 'block';
+        
+        // Auto-pause timer when retry modal opens
+        if (countdownTimer && !isPaused) {
+            pauseTimer();
+        }
+        
+        console.log('🔄 Retry modal opened for failed image:', currentImageId);
+    }
+
+    function closeRetryModal() {
+        document.getElementById('retryModal').style.display = 'none';
+        document.getElementById('retryStatus').style.display = 'none';
+        
+        console.log('❌ Retry modal closed');
+    }
+
+    async function confirmRetry() {
+        try {
+            console.log('🔄 Starting retry process for:', currentImageId);
+            
+            // Show processing status
+            document.getElementById('retryStatus').style.display = 'block';
+            document.getElementById('retryStatus').innerHTML = 
+                '<div style="color: #ff9800; font-weight: bold;">🔄 Generating new image ID...</div>';
+            
+            // Call retry endpoint
+            const response = await fetch(`/api/ml/retry-failed-image/${currentImageId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Retry cleanup successful:', data.message);
+                
+                // Show success message
+                document.getElementById('retryStatus').innerHTML = 
+                    `<div style="color: #28a745; font-weight: bold;">
+                        ✅ New image ID: ${data.new_image_id}<br>
+                        📋 Original data preserved<br>
+                        🔄 Redirecting to camera capture...
+                    </div>`;
+                
+                // Redirect to camera capture after short delay
+                setTimeout(() => {
+                    window.location.href = data.redirect_url;
+                }, 2000);
+                
+            } else {
+                console.error('❌ Retry failed:', data.error);
+                
+                // Show error message
+                document.getElementById('retryStatus').innerHTML = 
+                    `<div style="color: #dc3545; font-weight: bold;">
+                        ❌ Retry failed: ${data.error}
+                    </div>`;
+            }
+            
+        } catch (error) {
+            console.error('💥 Retry request failed:', error);
+            
+            document.getElementById('retryStatus').innerHTML = 
+                `<div style="color: #dc3545; font-weight: bold;">
+                    ❌ Network error: ${error.message}
+                </div>`;
+        }
+    }
+
+    document.getElementById('overrideForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('overrideUsername').value;
+        const password = document.getElementById('overridePassword').value;
+        
+        // Show loading
+        document.getElementById('overrideError').textContent = 'Authenticating...';
+        document.getElementById('overrideError').style.display = 'block';
+        document.getElementById('overrideError').style.color = 'blue';
+        
+        // Override authentication
+        fetch('/api/ml/override-auth/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                username: username,
+                password: password,
+                image_id: '{{ image_id }}'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentUserRole = data.user_role;
+                inspectionId = data.inspection_id;
+                closeOverrideModal();
+                
+                // Update current status in modal
+                document.getElementById('currentStatus').textContent = data.current_status;
+                document.getElementById('statusModal').style.display = 'block';
+            } else {
+                document.getElementById('overrideError').textContent = data.error;
+                document.getElementById('overrideError').style.display = 'block';
+                document.getElementById('overrideError').style.color = 'red';
+            }
+        })
+        .catch(error => {
+            document.getElementById('overrideError').textContent = 'Authentication failed: ' + error.message;
+            document.getElementById('overrideError').style.display = 'block';
+            document.getElementById('overrideError').style.color = 'red';
+        });
+    });
+
+    function changeStatus(newStatus) {
+        if (!inspectionId) {
+            alert('No inspection ID available');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to change status to ${newStatus}?`)) {
+            // Show loading
+            document.getElementById('statusChangeResult').innerHTML = 
+                '<div style="color: blue; text-align: center;">Updating status...</div>';
+            
+            fetch(`/api/ml/inspection/${inspectionId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('statusChangeResult').innerHTML = 
+                        `<div class="success-message">
+                            <div style="font-weight: bold;">✅ ${data.message}</div>
+                            <div style="font-size: 12px; margin-top: 5px;">Changed by: ${data.updated_by} (${data.user_role})</div>
+                            <div style="font-size: 11px; color: #666;">Timestamp: ${new Date().toLocaleString()}</div>
+                        </div>`;
+                    
+                    // Update the display
+                    document.getElementById('currentStatus').textContent = newStatus;
+                    
+                    // Update the badge on the page
+                    const badge = document.querySelector('.result-badge');
+                    if (newStatus === 'OK') {
+                        badge.className = 'result-badge result-pass';
+                        badge.innerHTML = '✅ PASS';
+                    } else {
+                        badge.className = 'result-badge result-fail';
+                        badge.innerHTML = '❌ FAIL';
+                    }
+                    
+                    // Close modal after 3 seconds
+                    setTimeout(() => {
+                        closeStatusModal();
+                    }, 3000);
+                } else {
+                    document.getElementById('statusChangeResult').innerHTML = 
+                        `<div class="error-message" style="display: block;">❌ ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('statusChangeResult').innerHTML = 
+                    `<div class="error-message" style="display: block;">❌ Status change failed: ${error.message}</div>`;
+            });
+        }
+    }
+
+    // Enhanced: Close modals when clicking outside (including retry modal)
+    window.onclick = function(event) {
+        const overrideModal = document.getElementById('overrideModal');
+        const statusModal = document.getElementById('statusModal');
+        const retryModal = document.getElementById('retryModal'); // 🆕 NEW
+        
+        if (event.target === overrideModal) {
+            closeOverrideModal();
+        }
+        if (event.target === statusModal) {
+            closeStatusModal();
+        }
+        if (event.target === retryModal) { // 🆕 NEW
+            closeRetryModal();
+        }
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    </script>
+
+</body>
+</html>

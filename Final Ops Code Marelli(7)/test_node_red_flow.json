@@ -1,0 +1,334 @@
+[
+    {
+        "id": "f9a7b2c8d3e4f5a6",
+        "type": "tab",
+        "label": "Django Image ID Test",
+        "disabled": false,
+        "info": "Test flow for sending Image IDs to Django app",
+        "env": []
+    },
+    {
+        "id": "a1b2c3d4e5f6g7h8",
+        "type": "inject",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Manual Test Trigger",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "test",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 120,
+        "wires": [
+            [
+                "b2c3d4e5f6g7h8i9"
+            ]
+        ]
+    },
+    {
+        "id": "b2c3d4e5f6g7h8i9",
+        "type": "ui_text_input",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Image ID Input",
+        "label": "Enter Image ID:",
+        "tooltip": "Type the Image ID to send to Django",
+        "group": "c3d4e5f6g7h8i9j0",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "text",
+        "delay": 300,
+        "topic": "image_id",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "str",
+        "x": 350,
+        "y": 120,
+        "wires": [
+            [
+                "d4e5f6g7h8i9j0k1"
+            ]
+        ]
+    },
+    {
+        "id": "d4e5f6g7h8i9j0k1",
+        "type": "function",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Prepare Django Message",
+        "func": "// Create the message payload for Django\nconst imageId = msg.payload || \"DEFAULT_TEST_IMG_001\";\nconst timestamp = new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15);\n\n// Create the message structure that Django expects\nmsg.payload = {\n    \"id\": `nodered_${timestamp}`,\n    \"message\": imageId\n};\n\nmsg.headers = {\n    \"Content-Type\": \"application/json\"\n};\n\nmsg.url = \"http://localhost:8000/api/ml/from-node-red/\";\nmsg.method = \"POST\";\n\n// Store original image ID for display\nmsg.original_image_id = imageId;\n\nnode.log(`Sending Image ID: ${imageId} to Django`);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 120,
+        "wires": [
+            [
+                "e5f6g7h8i9j0k1l2",
+                "h8i9j0k1l2m3n4o5"
+            ]
+        ]
+    },
+    {
+        "id": "e5f6g7h8i9j0k1l2",
+        "type": "http request",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Send to Django",
+        "method": "use",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 820,
+        "y": 120,
+        "wires": [
+            [
+                "f6g7h8i9j0k1l2m3",
+                "i9j0k1l2m3n4o5p6"
+            ]
+        ]
+    },
+    {
+        "id": "f6g7h8i9j0k1l2m3",
+        "type": "ui_text",
+        "z": "f9a7b2c8d3e4f5a6",
+        "group": "c3d4e5f6g7h8i9j0",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "Response Display",
+        "label": "Django Response:",
+        "format": "{{msg.payload.message || msg.payload.reply || 'No response'}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 1040,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "g7h8i9j0k1l2m3n4",
+        "type": "inject",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Test Sample IDs",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "IMG_001_TEST",
+        "payloadType": "str",
+        "x": 150,
+        "y": 200,
+        "wires": [
+            [
+                "d4e5f6g7h8i9j0k1"
+            ]
+        ]
+    },
+    {
+        "id": "h8i9j0k1l2m3n4o5",
+        "type": "ui_text",
+        "z": "f9a7b2c8d3e4f5a6",
+        "group": "c3d4e5f6g7h8i9j0",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "Sent Message Display",
+        "label": "Sent Image ID:",
+        "format": "{{msg.original_image_id || 'None'}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 580,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "i9j0k1l2m3n4o5p6",
+        "type": "debug",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Debug Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1040,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "j0k1l2m3n4o5p6q7",
+        "type": "inject",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Batch Test",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "BATCH_ABC_123",
+        "payloadType": "str",
+        "x": 150,
+        "y": 260,
+        "wires": [
+            [
+                "d4e5f6g7h8i9j0k1"
+            ]
+        ]
+    },
+    {
+        "id": "k1l2m3n4o5p6q7r8",
+        "type": "inject",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "QC Test",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "QC_20250127_001",
+        "payloadType": "str",
+        "x": 150,
+        "y": 320,
+        "wires": [
+            [
+                "d4e5f6g7h8i9j0k1"
+            ]
+        ]
+    },
+    {
+        "id": "l2m3n4o5p6q7r8s9",
+        "type": "inject",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Auto Send Every 10s",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "10",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 380,
+        "wires": [
+            [
+                "m3n4o5p6q7r8s9t0"
+            ]
+        ]
+    },
+    {
+        "id": "m3n4o5p6q7r8s9t0",
+        "type": "function",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Generate Auto ID",
+        "func": "// Generate automatic Image ID with timestamp\nconst now = new Date();\nconst timestamp = now.toISOString().replace(/[-:.]/g, '').slice(0, 15);\nconst autoId = `AUTO_${timestamp}`;\n\nmsg.payload = autoId;\n\nnode.log(`Auto-generated Image ID: ${autoId}`);\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 380,
+        "wires": [
+            [
+                "d4e5f6g7h8i9j0k1"
+            ]
+        ]
+    },
+    {
+        "id": "n4o5p6q7r8s9t0u1",
+        "type": "inject",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Invalid ID Test (too short)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "X",
+        "payloadType": "str",
+        "x": 150,
+        "y": 440,
+        "wires": [
+            [
+                "d4e5f6g7h8i9j0k1"
+            ]
+        ]
+    },
+    {
+        "id": "o5p6q7r8s9t0u1v2",
+        "type": "comment",
+        "z": "f9a7b2c8d3e4f5a6",
+        "name": "Instructions: Click inject buttons or type in text input to send Image IDs to Django",
+        "info": "This flow sends Image ID messages to your Django application.\n\n**How to use:**\n1. Make sure your Django server is running on http://localhost:8000\n2. Click any of the inject buttons for predefined test IDs\n3. Or use the text input field to enter custom Image IDs\n4. Watch the response in the UI and debug panel\n\n**Test buttons:**\n- Manual Test Trigger: Uses text input\n- Test Sample IDs: Sends \"IMG_001_TEST\"\n- Batch Test: Sends \"BATCH_ABC_123\"\n- QC Test: Sends \"QC_20250127_001\"\n- Auto Send: Generates timestamped IDs every 10 seconds\n- Invalid ID Test: Sends \"X\" (too short, should not auto-submit)\n\n**Expected Django behavior:**\n- Valid IDs (3+ chars, alphanumeric/underscore/hyphen): Auto-fill and submit form\n- Invalid IDs: Fill form but show validation error, no auto-submit",
+        "x": 400,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "c3d4e5f6g7h8i9j0",
+        "type": "ui_group",
+        "name": "Django Image ID Tester",
+        "tab": "p6q7r8s9t0u1v2w3",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "p6q7r8s9t0u1v2w3",
+        "type": "ui_tab",
+        "name": "Django Test",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    }
+]

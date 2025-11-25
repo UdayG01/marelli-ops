@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industrial Nut Detection - Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 500px;
+        }
+        
+        .login-section {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        
+        .login-section:last-child {
+            border-right: none;
+        }
+        
+        .login-section.active {
+            background: #f8f9fa;
+            transform: scale(1.02);
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .section-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .admin-icon { color: #dc3545; }
+        .user-icon { color: #28a745; }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .section-subtitle {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .admin-section input:focus {
+            border-color: #dc3545;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .btn-admin {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-admin:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(220,53,69,0.3);
+        }
+        
+        .btn-user {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-user:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(40,167,69,0.3);
+        }
+        
+        .features-list {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .feature-item::before {
+            content: '✓';
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+        
+        .admin-section .feature-item::before {
+            color: #dc3545;
+        }
+        
+        .messages {
+            margin-bottom: 20px;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .system-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .demo-credentials {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+        
+        .demo-credentials h4 {
+            margin-bottom: 8px;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+        
+        .demo-credentials p {
+            margin: 2px 0;
+            color: #856404;
+        }
+        
+        @media (max-width: 768px) {
+            .login-container {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+            }
+            
+            .login-section {
+                border-right: none;
+                border-bottom: 1px solid #e0e0e0;
+            }
+            
+            .login-section:last-child {
+                border-bottom: none;
+            }
+        }
+        
+        .version-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="system-info">
+        🏭 Industrial Nut Detection System v2.0
+    </div>
+    
+    <div class="login-container">
+        <!-- Admin Login Section -->
+        <div class="login-section admin-section">
+            <div class="section-header">
+                <span class="section-icon admin-icon">👨‍💼</span>
+                <h2 class="section-title">Admin Access</h2>
+                <p class="section-subtitle">System administration and management</p>
+            </div>
+            
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <form method="post" id="admin-form">
+                {% csrf_token %}
+                <input type="hidden" name="login_type" value="admin">
+                
+                <div class="form-group">
+                    <label for="admin-username">Username</label>
+                    <input type="text" id="admin-username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin-password">Password</label>
+                    <input type="password" id="admin-password" name="password" required>
+                </div>
+                
+                <button type="submit" class="login-btn btn-admin">
+                    🔐 Admin Login
+                </button>
+            </form>
+            
+            <div class="features-list">
+                <div class="feature-item">User management and access control</div>
+                <div class="feature-item">System settings and configuration</div>
+                <div class="feature-item">View all user inspections and data</div>
+                <div class="feature-item">Export and backup functionality</div>
+                <div class="feature-item">Performance monitoring and analytics</div>
+            </div>
+            
+            <div class="demo-credentials">
+                <h4>Demo Admin Account:</h4>
+                <p><strong>Username:</strong> admin</p>
+                <p><strong>Password:</strong> admin123</p>
+            </div>
+        </div>
+        
+        <!-- User Login Section -->
+        <div class="login-section user-section">
+            <div class="section-header">
+                <span class="section-icon user-icon">👨‍🔧</span>
+                <h2 class="section-title">User Access</h2>
+                <p class="section-subtitle">Quality control and inspection</p>
+            </div>
+            
+            <form method="post" id="user-form">
+                {% csrf_token %}
+                <input type="hidden" name="login_type" value="user">
+                
+                <div class="form-group">
+                    <label for="user-username">Username</label>
+                    <input type="text" id="user-username" name="username" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-password">Password</label>
+                    <input type="password" id="user-password" name="password" required>
+                </div>
+                
+                <button type="submit" class="login-btn btn-user">
+                    🔧 User Login
+                </button>
+            </form>
+            
+            <div class="features-list">
+                <div class="feature-item">Single image workflow processing</div>
+                <div class="feature-item">Real-time nut detection results</div>
+                <div class="feature-item">Personal inspection history</div>
+                <div class="feature-item">Error tracking and reporting</div>
+                <div class="feature-item">Quality control dashboard</div>
+            </div>
+            
+            <div class="demo-credentials">
+                <h4>Demo User Account:</h4>
+                <p><strong>Username:</strong> testuser</p>
+                <p><strong>Password:</strong> testpass123</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="version-info">
+        YOLOv8 • Django • Hikrobot Camera Integration
+    </div>
+    
+    <script>
+        // Add visual feedback for form interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            const adminSection = document.querySelector('.admin-section');
+            const userSection = document.querySelector('.user-section');
+            
+            const adminInputs = adminSection.querySelectorAll('input');
+            const userInputs = userSection.querySelectorAll('input');
+            
+            // Admin section focus handlers
+            adminInputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    adminSection.classList.add('active');
+                    userSection.classList.remove('active');
+                });
+            });
+            
+            // User section focus handlers
+            userInputs.forEach(input => {
+                input.addEventListener('focus', () => {
+                    userSection.classList.add('active');
+                    adminSection.classList.remove('active');
+                });
+            });
+            
+            // Form submission handlers
+            document.getElementById('admin-form').addEventListener('submit', function(e) {
+                const btn = this.querySelector('.login-btn');
+                btn.textContent = '🔄 Logging in...';
+                btn.disabled = true;
+            });
+            
+            document.getElementById('user-form').addEventListener('submit', function(e) {
+                const btn = this.querySelector('.login-btn');
+                btn.textContent = '🔄 Logging in...';
+                btn.disabled = true;
+            });
+            
+            // Auto-fill demo credentials on double-click
+            adminSection.addEventListener('dblclick', function() {
+                document.getElementById('admin-username').value = 'admin';
+                document.getElementById('admin-password').value = 'admin123';
+            });
+            
+            userSection.addEventListener('dblclick', function() {
+                document.getElementById('user-username').value = 'testuser';
+                document.getElementById('user-password').value = 'testpass123';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Check - Industrial Nut Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 0.9rem;
+        }
+
+        .user-info a {
+            color: #ffd700;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 25px;
+            padding: 25px;
+            min-height: 500px;
+        }
+
+        .video-section {
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+
+        .video-stream {
+            width: 100%;
+            height: auto;
+            max-height: 500px;
+            object-fit: contain;
+        }
+
+        .no-signal {
+            color: #e74c3c;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #5a6268);
+            color: white;
+        }
+
+        .button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-display {
+            background: #ecf0f1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-connected {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .status-disconnected {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .notifications {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .notification {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            border-left-color: #27ae60;
+        }
+
+        .notification.error {
+            border-left-color: #e74c3c;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .back-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📷 Camera Check</h1>
+            <p>Test camera live streaming functionality</p>
+            <div class="user-info">
+                Welcome, <strong>{{ user.username }}</strong> ({{ user.role|title }})
+                <a href="{% url 'ml_api:simple_logout' %}">Logout</a>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="video-section">
+                <img id="videoStream" class="video-stream" style="display: none;" alt="Camera Stream">
+                <div id="noSignal" class="no-signal">
+                    <div>📷</div>
+                    <div>Camera Disconnected</div>
+                    <div style="font-size: 0.8em; margin-top: 10px;">Camera will connect automatically</div>
+                </div>
+            </div>
+
+            <div class="controls-panel">
+                <div class="status-display">
+                    <div id="statusText" class="status-disconnected">Connecting to camera...</div>
+                </div>
+
+                <div class="control-group">
+                    <h3>Camera Connection</h3>
+                    <button class="button btn-success" id="connectBtn" onclick="connectCamera()">
+                        Connect Camera
+                    </button>
+                    <button class="button btn-secondary" id="disconnectBtn" onclick="disconnectCamera()" disabled>
+                        Disconnect Camera
+                    </button>
+                </div>
+
+                <div class="control-group">
+                    <h3>Navigation</h3>
+                    <div class="back-buttons">
+                        <a href="{% url 'ml_api:image_id_entry' %}" class="button btn-primary">
+                            ← Back to Image ID Entry
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notifications" id="notifications"></div>
+
+    <script>
+        let isConnected = false;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing camera check...');
+            connectCamera();
+            setInterval(refreshStatus, 3000);  // Status every 3 seconds
+        });
+
+        // Utility functions
+        function showNotification(message, type = 'info') {
+            console.log(`📢 ${type}: ${message}`);
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}`;
+            document.getElementById('notifications').appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        function updateUI(connected) {
+            isConnected = connected;
+            const statusText = document.getElementById('statusText');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const videoStream = document.getElementById('videoStream');
+            const noSignal = document.getElementById('noSignal');
+            
+            if (connected) {
+                statusText.textContent = 'Camera Connected - Live Streaming Active';
+                statusText.className = 'status-connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                videoStream.src = `/api/ml/camera/stream/?t=${Date.now()}`;
+                videoStream.style.display = 'block';
+                noSignal.style.display = 'none';
+            } else {
+                statusText.textContent = 'Camera Disconnected';
+                statusText.className = 'status-disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                videoStream.style.display = 'none';
+                noSignal.style.display = 'block';
+            }
+        }
+
+        async function connectCamera() {
+            const connectBtn = document.getElementById('connectBtn');
+            const originalText = connectBtn.innerHTML;
+            
+            connectBtn.innerHTML = '<span style="display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; margin-right: 10px;"></span>Connecting...';
+            connectBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/ml/camera/connect/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Camera connected successfully! 📷', 'success');
+                    updateUI(true);
+                } else {
+                    showNotification(`Connection failed: ${data.message}`, 'error');
+                    updateUI(false);
+                }
+            } catch (error) {
+                showNotification(`Connection error: ${error.message}`, 'error');
+                updateUI(false);
+            } finally {
+                connectBtn.innerHTML = originalText;
+                connectBtn.disabled = false;
+            }
+        }
+
+        async function disconnectCamera() {
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const originalText = disconnectBtn.innerHTML;
+            
+            disconnectBtn.innerHTML = '<span style="display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; margin-right: 10px;"></span>Disconnecting...';
+            disconnectBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/ml/camera/disconnect/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showNotification('Camera disconnected successfully', 'success');
+                    updateUI(false);
+                } else {
+                    showNotification(`Disconnect failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showNotification(`Disconnect error: ${error.message}`, 'error');
+            } finally {
+                disconnectBtn.innerHTML = originalText;
+                disconnectBtn.disabled = false;
+            }
+        }
+
+        async function refreshStatus() {
+            try {
+                const response = await fetch('/api/ml/camera/status/');
+                const data = await response.json();
+                
+                updateUI(data.connected);
+                
+            } catch (error) {
+                console.error('Status refresh error:', error);
+                updateUI(false);
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Handle video stream errors
+        document.getElementById('videoStream').onerror = function() {
+            console.log('Video stream error, retrying...');
+            if (isConnected) {
+                setTimeout(() => {
+                    this.src = `/api/ml/camera/stream/?t=${Date.now()}`;
+                }, 2000);
+            }
+        };
+
+        // Add CSS animation for spinner
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

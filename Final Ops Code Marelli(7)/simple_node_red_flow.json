@@ -1,0 +1,107 @@
+[
+    {
+        "id": "simple_test",
+        "type": "inject",
+        "name": "Send Hello to Django",
+        "props": [{"p": "payload"}],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "topic": "",
+        "payload": "{\"id\":\"hello\",\"message\":\"Hello from Node-RED!\"}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 100,
+        "wires": [["send_to_django"]]
+    },
+    {
+        "id": "test_trigger",
+        "type": "inject",
+        "name": "Test Trigger Command",
+        "props": [{"p": "payload"}],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "topic": "",
+        "payload": "{\"id\":\"trigger_test\",\"message\":\"Trigger camera please!\"}",
+        "payloadType": "json",
+        "x": 160,
+        "y": 160,
+        "wires": [["send_to_django"]]
+    },
+    {
+        "id": "send_to_django",
+        "type": "http request",
+        "name": "POST to Django",
+        "method": "POST",
+        "ret": "obj",
+        "url": "http://localhost:8000/api/ml/from-node-red/",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "x": 380,
+        "y": 130,
+        "wires": [["show_response"]]
+    },
+    {
+        "id": "show_response",
+        "type": "debug",
+        "name": "Django Reply",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "complete": "payload",
+        "x": 580,
+        "y": 130,
+        "wires": []
+    },
+    {
+        "id": "test_django_to_node_red",
+        "type": "http in",
+        "name": "Receive from Django",
+        "url": "/django-test",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 180,
+        "y": 260,
+        "wires": [["process_django_message"]]
+    },
+    {
+        "id": "process_django_message",
+        "type": "function",
+        "name": "Process Django Message",
+        "func": "// Log received message from Django\nconsole.log('Received from Django:', msg.payload);\n\n// Simple response back to Django\nmsg.payload = {\n    \"success\": true,\n    \"message\": \"Node-RED received your message!\",\n    \"received_data\": msg.payload,\n    \"timestamp\": new Date().toISOString()\n};\n\nreturn msg;",
+        "outputs": 1,
+        "x": 420,
+        "y": 260,
+        "wires": [["send_response", "debug_django_msg"]]
+    },
+    {
+        "id": "send_response",
+        "type": "http response",
+        "name": "Reply to Django",
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "x": 660,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "debug_django_msg",
+        "type": "debug",
+        "name": "Django Message",
+        "active": true,
+        "tosidebar": true,
+        "console": true,
+        "complete": "payload",
+        "x": 660,
+        "y": 300,
+        "wires": []
+    }
+]

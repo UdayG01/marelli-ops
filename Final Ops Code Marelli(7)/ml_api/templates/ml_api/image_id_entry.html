@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image ID Entry - Industrial Nut Detection</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header Styles */
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .page-header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .logo-left {
+            order: 1;
+        }
+        
+        .logo-right {
+            order: 2;
+        }
+        
+        /* Main Content Area */
+        .main-wrapper {
+            flex: 1;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #2c3e50, #34495e);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        
+        .user-info {
+            position: absolute;
+            top: 20px;
+            right: 25px;
+            font-size: 0.9rem;
+        }
+        
+        .user-info a {
+            color: #ffd700;
+            text-decoration: none;
+            margin-left: 15px;
+        }
+        
+        /* Trigger Count Display */
+        .trigger-count-display {
+            position: absolute;
+            top: 20px;
+            left: 25px;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        .trigger-count-display.warning {
+            background: rgba(255, 193, 7, 0.3);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .main-content {
+            padding: 40px;
+        }
+        
+        .workflow-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 15px;
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .step.inactive .step-number {
+            background: #e0e0e0;
+            color: #999;
+        }
+        
+        .step-title {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .step.inactive .step-title {
+            color: #999;
+        }
+        
+        .scan-method {
+            background: #f0f8f0;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            border: 2px solid #4CAF50;
+            margin-bottom: 30px;
+        }
+        
+        .method-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #4CAF50;
+        }
+        
+        .method-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .method-description {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .input-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            border: 2px solid #4CAF50;
+            margin-bottom: 25px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+        
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        
+        .input-hint {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        /* NEW: Inspection Status Button Styling */
+        .btn-info {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-1px);
+        }
+        
+        /* NEW: Camera Check Button Styling */
+        .btn-camera {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .btn-camera:hover {
+            background: linear-gradient(135deg, #20c997, #1ba085);
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+        
+        /* Updated for user buttons */
+        .action-buttons.user-buttons {
+            justify-content: center;
+        }
+        
+        .user-button-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .validation-message {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-weight: 600;
+        }
+        
+        .validation-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .validation-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .image-id-preview {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .preview-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .preview-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            font-family: monospace;
+        }
+        
+        /* Refresh Overlay Styles */
+        .refresh-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+        
+        .refresh-overlay.active {
+            display: flex;
+        }
+        
+        .refresh-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: fadeInScale 0.3s ease-out;
+        }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .refresh-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .refresh-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .refresh-message {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .refresh-progress {
+            width: 200px;
+            height: 4px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+        
+        .refresh-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            animation: progress 3s ease-in-out infinite;
+        }
+        
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+        
+        /* Footer Styles */
+        .page-footer {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 25px 20px;
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
+            margin-top: auto;
+        }
+        
+        .page-footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+        
+        .footer-section h3 {
+            color: #1f2937;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .footer-section p {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .footer-section a {
+            color: #4f46e5;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-section a:hover {
+            color: #4338ca;
+            text-decoration: underline;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .page-header-content {
+                padding: 0 10px;
+            }
+            
+            .logo {
+                height: 40px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .user-button-group {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .user-button-group .btn {
+                width: 100%;
+            }
+            
+            .page-footer-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .footer-section {
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .page-header {
+                padding: 10px 15px;
+            }
+            
+            .logo {
+                height: 35px;
+            }
+            
+            .page-footer {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Refresh Overlay -->
+    <div id="refresh-overlay" class="refresh-overlay">
+        <div class="refresh-content">
+            <div class="refresh-icon">🔄</div>
+            <div class="refresh-title">Server Refreshing</div>
+            <div class="refresh-message">Please wait while the system refreshes...</div>
+            <div class="refresh-progress">
+                <div class="refresh-progress-bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="page-header-content">
+            <img src="{% static 'logo_folder/marellilogo.png' %}" alt="Marelli Logo" class="logo logo-left">
+            <img src="{% static 'logo_folder/Renatalogo.png' %}" alt="Renata IoT Logo" class="logo logo-right">
+        </div>
+    </header>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+        <div class="container">
+            <div class="header">
+                <div id="trigger-count-display" class="trigger-count-display">
+                    Trigger Count: <span id="trigger-count-value">0</span>
+                </div>
+                <h1>🏷️ Image ID Entry</h1>
+                <p>Step 1: Enter or scan the unique image identifier</p>
+                <div class="user-info">
+                    Welcome, <strong>{{ user.username }}</strong> ({{ user.role|title }})
+                    <a href="{% url 'ml_api:simple_logout' %}">Logout</a>
+                </div>
+            </div>
+            
+            <div class="main-content">
+                <!-- Workflow Indicator -->
+                <div class="workflow-indicator">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-title">Image ID</div>
+                    </div>
+                    <div class="step inactive">
+                        <div class="step-number">2</div>
+                        <div class="step-title">Image Source</div>
+                    </div>
+                    <div class="step inactive">
+                        <div class="step-number">3</div>
+                        <div class="step-title">Processing</div>
+                    </div>
+                    <div class="step inactive">
+                        <div class="step-number">4</div>
+                        <div class="step-title">Results</div>
+                    </div>
+                </div>
+                
+                <!-- Scan QR Code Method -->
+                <div class="scan-method">
+                    <div class="method-icon">📱</div>
+                    <div class="method-title">Scan QR Code</div>
+                </div>
+                
+                <!-- Input Section -->
+                <div class="input-section">
+                    <form id="qr-form">
+                        <div class="form-group">
+                            <label for="image-id-input">Image ID</label>
+                            <input 
+                                type="text" 
+                                id="image-id-input" 
+                                name="image_id"
+                                placeholder="Enter Image ID (e.g., ABC1234567)"
+                                minlength="10"
+                                maxlength="10"
+                                autocomplete="off"
+                            >
+                            <div class="input-hint">
+                                Image ID must be exactly 10 characters. Allowed: letters, numbers, underscore, hyphen
+                            </div>
+                        </div>
+                        
+                        <div id="validation-message"></div>
+                        
+                        <div id="image-id-preview" class="image-id-preview" style="display: none;">
+                            <div class="preview-label">Image ID Preview:</div>
+                            <div class="preview-value" id="preview-value"></div>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons {% if user.role != 'admin' %}user-buttons{% endif %}">
+                    {% if user.role == 'admin' %}
+                        <a href="{% url 'ml_api:simple_admin_dashboard' %}" class="btn btn-secondary">
+                            ← Back to Dashboard
+                        </a>
+                        
+                        <div class="user-button-group">
+                            <a href="{% url 'ml_api:camera_check' %}" class="btn btn-camera">
+                                📷 Camera Check
+                            </a>
+                            <a href="{% url 'ml_api:inspection_list' %}" class="btn btn-info">
+                                📋 Inspection Status
+                            </a>
+                            <button class="btn btn-primary" id="proceed-btn" onclick="proceedToImageSource()" disabled>
+                                Proceed to Image Source →
+                            </button>
+                        </div>
+                    {% else %}
+                        <div class="user-button-group">
+                            <a href="{% url 'ml_api:camera_check' %}" class="btn btn-camera">
+                                📷 Camera Check
+                            </a>
+                            <a href="{% url 'ml_api:inspection_list' %}" class="btn btn-info">
+                                📋 Inspection Status
+                            </a>
+                            <button class="btn btn-primary" id="proceed-btn" onclick="proceedToImageSource()" disabled>
+                                Proceed to Image Source →
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {% if user.role == 'admin' %}
+                <!-- Admin Tools Section -->
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057;">Admin Tools</h4>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="manualResetTriggerCount()" class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 15px;">
+                            🔧 Reset Trigger Count
+                        </button>
+                        <button onclick="manualServerRefresh()" class="btn btn-secondary" style="font-size: 0.9rem; padding: 8px 15px;">
+                            🔄 Manual Server Refresh
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <div class="page-footer-content">
+            <div class="footer-section">
+                <h3>Contact Information</h3>
+                <p><strong>Anil Sagar</strong></p>
+                <p><a href="mailto:anil.sagar@renataiot.com">anil.sagar@renataiot.com</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Online Presence</h3>
+                <p><a href="https://renataiot.com" target="_blank">https://renataiot.com</a></p>
+                <p><a href="https://www.linkedin.com/in/sagaranil" target="_blank">LinkedIn Profile</a></p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        let currentImageId = '';
+        let isValidImageId = false;
+        let nodeRedCheckInterval = null;
+        let triggerStatusInterval = null;
+        let isRefreshing = false;
+        let serverHealthCheckInterval = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            // Focus on input
+            document.getElementById('image-id-input').focus();
+            
+            // Start checking for Node-RED messages
+            startNodeRedMessagePolling();
+            
+            // Start monitoring trigger status
+            startTriggerStatusMonitoring();
+        });
+        
+        // Trigger Status Monitoring
+        function startTriggerStatusMonitoring() {
+            console.log('Started trigger status monitoring...');
+            
+            // Check immediately
+            checkTriggerStatus();
+            
+            // Check every 2 seconds
+            triggerStatusInterval = setInterval(checkTriggerStatus, 2000);
+        }
+        
+        function stopTriggerStatusMonitoring() {
+            if (triggerStatusInterval) {
+                clearInterval(triggerStatusInterval);
+                triggerStatusInterval = null;
+                console.log('Stopped trigger status monitoring');
+            }
+        }
+        
+        count = 0
+        function checkTriggerStatus() {
+            // Don't check if already refreshing
+            if (isRefreshing) {
+                return;
+            }
+
+            console.log("COUNT -------------------------------------")
+            
+            
+            fetch('/api/ml/camera/trigger/status/')
+                .then(response => response.json())
+                .then(data => {
+                    // Update trigger count display
+                    const triggerCountElement = document.getElementById('trigger-count-value');
+                    const triggerCountDisplay = document.getElementById('trigger-count-display');
+
+                    count += 1
+                    
+                    if (data.trigger_count !== undefined) {
+                        triggerCountElement.textContent = data.trigger_count;
+                        
+                        // Add warning class if count is getting high
+                        if (data.trigger_count >= 4) {
+                            triggerCountDisplay.classList.add('warning');
+                        } else {
+                            triggerCountDisplay.classList.remove('warning');
+                        }
+                        
+                        // Check if trigger count exceeds 10
+                        if (count > 2) {
+                            console.log('Trigger count exceeded 10, initiating server refresh...');
+                            initiateServerRefresh();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking trigger status:', error);
+                });
+        }
+        
+        function initiateServerRefresh() {
+            isRefreshing = true;
+            count = 0
+            // Stop all polling
+            stopNodeRedMessagePolling();
+            stopTriggerStatusMonitoring();
+            
+            // Show overlay with custom message for Django auto-reload
+            const overlayContent = document.querySelector('.refresh-content');
+            if (overlayContent) {
+                const messageElement = overlayContent.querySelector('.refresh-message');
+                if (messageElement) {
+                    messageElement.textContent = 'Django is auto-reloading. The page will refresh automatically...';
+                }
+            }
+            
+            // Show overlay
+            document.getElementById('refresh-overlay').classList.add('active');
+            
+            // Call the refresh endpoint
+            fetch('/api/ml/refresh-server/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Django auto-reload triggered:', data.message);
+                    // Django auto-reload takes about 3-5 seconds
+                    // Start checking server health after a brief delay
+                    setTimeout(() => {
+                        startServerHealthCheck();
+                    }, 2000); // Wait 2 seconds before starting health checks
+                } else {
+                    console.error('Failed to trigger Django auto-reload:', data.error);
+                    // Try alternative method
+                    triggerBatchFileRefresh();
+                }
+            })
+            .catch(error => {
+                console.error('Error calling refresh endpoint:', error);
+                // Try alternative method
+                triggerBatchFileRefresh();
+            });
+        }
+        
+        function triggerBatchFileRefresh() {
+            // This is a fallback method - you might need to adjust based on your setup
+            console.log('Attempting batch file refresh...');
+            
+            // Create a request to trigger the batch file
+            fetch('/api/ml/trigger-batch-refresh/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    startServerHealthCheck();
+                } else {
+                    hideRefreshOverlay();
+                }
+            })
+            .catch(error => {
+                console.error('Batch file trigger failed:', error);
+                hideRefreshOverlay();
+            });
+        }
+        
+        function startServerHealthCheck() {
+            let checkCount = 0;
+            const maxChecks = 30; // Check for up to 30 seconds (Django auto-reload usually takes 3-5 seconds)
+            
+            console.log('Waiting for Django auto-reload to complete...');
+            
+            serverHealthCheckInterval = setInterval(() => {
+                checkCount++;
+                
+                // Try to ping the server
+                fetch('/api/ml/health-check/', {
+                    method: 'GET',
+                    cache: 'no-cache'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Server not ready');
+                })
+                .then(data => {
+                    // Check if server is back and trigger count is reset
+                    if (data.status === 'healthy' && data.server_refreshed) {
+                        console.log('Django auto-reload completed! Trigger count reset.');
+                        clearInterval(serverHealthCheckInterval);
+                        
+                        // Update the overlay message
+                        const messageElement = document.querySelector('.refresh-message');
+                        if (messageElement) {
+                            messageElement.textContent = 'Server refreshed successfully! Reloading page...';
+                        }
+                        
+                        // Reload the page after a brief delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else if (data.status === 'healthy') {
+                        // Server is up but might still be reloading
+                        console.log('Server responding, waiting for complete reload...');
+                    }
+                })
+                .catch(error => {
+                    // Server not ready yet - this is expected during reload
+                    console.log(`Health check ${checkCount}/${maxChecks}: Server reloading...`);
+                });
+                
+                // Timeout after max checks
+                if (checkCount >= maxChecks) {
+                    clearInterval(serverHealthCheckInterval);
+                    console.log('Health check timeout - attempting page reload anyway');
+                    // Try reloading anyway
+                    window.location.reload();
+                }
+            }, 1000); // Check every second
+        }
+        
+        function hideRefreshOverlay() {
+            document.getElementById('refresh-overlay').classList.remove('active');
+            isRefreshing = false;
+            
+            // Restart monitoring
+            startNodeRedMessagePolling();
+            startTriggerStatusMonitoring();
+        }
+        
+        function startNodeRedMessagePolling() {
+            console.log('Started Node-RED message polling...');
+            
+            // Check immediately
+            checkForNodeRedMessage();
+            
+            // Check every 500ms for Node-RED messages
+            nodeRedCheckInterval = setInterval(checkForNodeRedMessage, 500);
+        }
+        
+        function stopNodeRedMessagePolling() {
+            if (nodeRedCheckInterval) {
+                clearInterval(nodeRedCheckInterval);
+                nodeRedCheckInterval = null;
+                console.log('Stopped Node-RED message polling');
+            }
+        }
+        
+        function checkForNodeRedMessage() {
+            fetch('/api/ml/get-node-red-message/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.has_message && data.message_content) {
+                        console.log('Node-RED message received:', data.message_content);
+                        
+                        // Fill the input field with the message content
+                        const inputField = document.getElementById('image-id-input');
+                        inputField.value = data.message_content;
+                        
+                        // Trigger validation
+                        validateInput();
+                        
+                        // Show notification
+                        showNodeRedNotification(data.message_content);
+                        
+                        // Auto-submit if valid
+                        setTimeout(() => {
+                            if (isValidImageId) {
+                                console.log('Auto-submitting form with Node-RED message:', data.message_content);
+                                proceedToImageSource();
+                            }
+                        }, 1000); // 1 second delay to show the message
+                        
+                        // Stop polling after receiving a message
+                        stopNodeRedMessagePolling();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking Node-RED message:', error);
+                });
+        }
+        
+        function showNodeRedNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #4CAF50;
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                z-index: 9999;
+                font-family: 'Segoe UI', sans-serif;
+                font-weight: 600;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.innerHTML = `
+                📡 Node-RED Message Received<br>
+                <small style="opacity: 0.9;">Image ID: ${message}</small>
+            `;
+            
+            // Add CSS animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            document.body.appendChild(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        function setupEventListeners() {
+            // Input validation
+            const imageIdInput = document.getElementById('image-id-input');
+            imageIdInput.addEventListener('input', validateInput);
+            imageIdInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (isValidImageId) {
+                        proceedToImageSource();
+                    }
+                }
+            });
+        }
+        
+        // Stop polling when page is about to unload
+        window.addEventListener('beforeunload', function() {
+            stopNodeRedMessagePolling();
+            stopTriggerStatusMonitoring();
+        });
+        
+        function validateInput() {
+            const input = document.getElementById('image-id-input');
+            const value = input.value.trim();
+            const messageDiv = document.getElementById('validation-message');
+            const previewDiv = document.getElementById('image-id-preview');
+            const previewValue = document.getElementById('preview-value');
+            
+            // Clear previous validation
+            messageDiv.innerHTML = '';
+            previewDiv.style.display = 'none';
+            
+            if (value.length === 0) {
+                isValidImageId = false;
+                updateProceedButton();
+                return;
+            }
+            
+            // Validate format
+            const regex = /^[A-Za-z0-9_-]+$/;
+            
+            if (value.length < 10) {
+                showValidationMessage('error', 'Image ID must be exactly 10 characters long');
+                isValidImageId = false;
+            } else if (value.length > 15) {
+                showValidationMessage('error', 'Image ID must be exactly 10 characters long');
+                isValidImageId = false;
+            } else if (!regex.test(value)) {
+                showValidationMessage('error', 'Image ID can only contain letters, numbers, underscore, and hyphen');
+                isValidImageId = false;
+            } else {
+                showValidationMessage('success', `Valid Image ID: ${value}`);
+                currentImageId = value;
+                isValidImageId = true;
+                // Show preview
+                previewValue.textContent = value;
+                previewDiv.style.display = 'block';
+            }
+            
+            updateProceedButton();
+        }
+        
+        function showValidationMessage(type, message) {
+            const messageDiv = document.getElementById('validation-message');
+            messageDiv.innerHTML = `<div class="validation-${type}">${message}</div>`;
+        }
+        
+        function updateProceedButton() {
+            const proceedBtn = document.getElementById('proceed-btn');
+            proceedBtn.disabled = !isValidImageId;
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+                
+        // Manual admin functions
+        function manualResetTriggerCount() {
+            if (confirm('Are you sure you want to reset the trigger count to 0?')) {
+                fetch('/api/ml/reset-trigger-count/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Trigger count reset from ${data.old_count} to 0`);
+                        // Update display
+                        document.getElementById('trigger-count-value').textContent = '0';
+                        document.getElementById('trigger-count-display').classList.remove('warning');
+                    } else {
+                        alert('Failed to reset trigger count: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting trigger count:', error);
+                    alert('Error resetting trigger count');
+                });
+            }
+        }
+        
+        function manualServerRefresh() {
+            if (confirm('This will trigger a Django auto-reload. The page will refresh automatically. Continue?')) {
+                initiateServerRefresh();
+            }
+        }
+        
+        function proceedToImageSource() {
+            if (!isValidImageId || !currentImageId) {
+                alert('Please enter a valid Image ID first');
+                return;
+            }
+            
+            // Stop polling before navigation
+            stopNodeRedMessagePolling();
+            stopTriggerStatusMonitoring();
+            
+            // 🆕 NEW: Send QR code to Node-RED for manual entry (with duplicate check)
+            fetch('/api/ml/send-qr-to-node-red/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    image_id: currentImageId,
+                    source_type: 'manual'
+                })
+            }).then(response => response.json())
+            .then(data => {
+                console.log('QR sent to Node-RED:', data);
+                if (data.success) {
+                    if (data.auto_modified) {
+                        currentImageId = data.new_image_id
+                        console.log(`✅ Duplicate Image ID, modified to: "${currentImageId}" - sent to Node-RED`);
+                        document.getElementById("image-id-input").value = currentImageId;
+                        document.getElementById('image-id-preview').value = currentImageId
+                    } 
+                    console.log(`✅ QR code "${currentImageId}" sent to Node-RED (manual entry)`);
+                } else {
+                    console.error('❌ Failed to send QR to Node-RED:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error sending QR to Node-RED:', error);
+            });
+            
+            // Store Image ID in session/localStorage for next step
+            sessionStorage.setItem('currentImageId', currentImageId);
+            sessionStorage.setItem('imageIdMethod', 'qr');
+            
+            // NEW: Also store in cache for triggered captures
+            fetch('/api/ml/store-image-id/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    image_id: currentImageId
+                })
+            }).then(response => response.json())
+            .then(data => {
+                console.log('Image ID stored in cache:', data);
+                if (data.success) {
+                    console.log(`✅ Image ID "${currentImageId}" stored in cache for triggered captures`);
+                } else {
+                    console.error('❌ Failed to store image ID in cache:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error storing image ID in cache:', error);
+            });
+            
+            // Navigate to image source selection
+            window.location.href = '/api/ml/image-source/?image_id=' + encodeURIComponent(currentImageId);
+        }
+    </script>
+</body>
+</html>

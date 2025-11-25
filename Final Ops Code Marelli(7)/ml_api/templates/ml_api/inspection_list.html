@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspection List - Nut Detection System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+        }
+        
+        .user-info {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .role-admin {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .role-user {
+            background: #28a745;
+            color: white;
+        }
+        
+        .inspections-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .inspections-table th {
+            background: #343a40;
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .inspections-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        
+        .inspections-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            min-width: 50px;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .status-btn.ok {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-btn.ng {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .confidence-score {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .processing-time {
+            font-size: 0.8rem;
+            color: #28a745;
+            font-weight: 500;
+        }
+        
+        .nuts-count {
+            display: flex;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+        
+        .nuts-present {
+            color: #28a745;
+            font-weight: 600;
+        }
+        
+        .nuts-absent {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        .no-inspections {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: #5a6268;
+            color: white;
+            text-decoration: none;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+            
+            .inspections-table {
+                font-size: 0.8rem;
+            }
+            
+            .inspections-table th,
+            .inspections-table td {
+                padding: 8px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Inspection Status</h1>
+            <div class="user-info">
+                Logged in as: <strong>{{ request.user.username }}</strong>
+                <span class="role-badge role-{{ user_role }}">{{ user_role|upper }}</span>
+            </div>
+        </div>
+        
+        {% if inspections %}
+        <table class="inspections-table">
+            <thead>
+                <tr>
+                    <th>Image ID</th>
+                    <th>Date/Time</th>
+                    <th>Nuts Status</th>
+                    <th>Status</th>
+                    <th>Processing Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inspection in inspections %}
+                <tr data-inspection-id="{{ inspection.id }}">
+                    <td>
+                        <strong>{{ inspection.image_id }}</strong>
+                    </td>
+                    <td>
+                        <div>{{ inspection.capture_datetime|date:"M d, Y" }}</div>
+                        <div style="font-size: 0.8rem; color: #6c757d;">
+                            {{ inspection.capture_datetime|time:"H:i:s" }}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="nuts-count">
+                            <span class="nuts-present">✓ {{ inspection.nuts_present }}</span>
+                            <span class="nuts-absent">✗ {{ inspection.nuts_absent }}</span>
+                        </div>
+                        <div class="confidence-score">
+                            Total: {{ inspection.total_nuts_expected }}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="status-btn {% if inspection.test_status == 'OK' %}ok active{% else %}ng active{% endif %}">
+                            {{ inspection.test_status }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="processing-time">
+                            {{ inspection.processing_time|floatformat:2 }}s
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-inspections">
+            <h3>No Inspections Found</h3>
+            <p>No inspection records available.</p>
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: 30px; text-align: center;">
+            {% if user_role == 'admin' %}
+                <a href="{% url 'ml_api:simple_admin_dashboard' %}" class="back-btn">← Back to Admin Dashboard</a>
+            {% else %}
+                <a href="{% url 'ml_api:image_id_entry' %}" class="btn btn-secondary"> ← Back to Image ID Entry</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

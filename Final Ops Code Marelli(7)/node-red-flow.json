@@ -1,0 +1,124 @@
+[
+    {
+        "id": "main_flow",
+        "type": "tab",
+        "label": "Marelli Inspection Receiver",
+        "disabled": false,
+        "info": "Simple flow to receive inspection data from Django"
+    },
+    {
+        "id": "http_in_node",
+        "type": "http in",
+        "z": "main_flow",
+        "name": "Receive Inspection Data",
+        "url": "/inspection-result",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 160,
+        "y": 100,
+        "wires": [["extract_fields"]]
+    },
+    {
+        "id": "extract_fields",
+        "type": "change",
+        "z": "main_flow",
+        "name": "Extract Key Fields",
+        "rules": [
+            {
+                "t": "set",
+                "p": "image_id",
+                "pt": "msg",
+                "to": "payload.image_id",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "overall_result",
+                "pt": "msg",
+                "to": "payload.overall_result",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "source",
+                "pt": "msg",
+                "to": "payload.source",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "capture_type",
+                "pt": "msg",
+                "to": "payload.capture_type",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 360,
+        "y": 100,
+        "wires": [["debug_image_id", "debug_result", "debug_complete", "send_response"]]
+    },
+    {
+        "id": "debug_image_id",
+        "type": "debug",
+        "z": "main_flow",
+        "name": "Show Image ID",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "image_id",
+        "targetType": "msg",
+        "x": 580,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "debug_result",
+        "type": "debug",
+        "z": "main_flow",
+        "name": "Show Overall Result",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "overall_result",
+        "targetType": "msg",
+        "x": 600,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "debug_complete",
+        "type": "debug",
+        "z": "main_flow",
+        "name": "Show All Data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 580,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "send_response",
+        "type": "http response",
+        "z": "main_flow",
+        "name": "Send OK Response",
+        "statusCode": "200",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "x": 590,
+        "y": 160,
+        "wires": []
+    }
+]

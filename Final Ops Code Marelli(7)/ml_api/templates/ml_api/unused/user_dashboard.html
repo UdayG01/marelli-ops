@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - Industrial Nut Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation Header -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">🔩</div>
+                    <h1 class="text-xl font-bold text-gray-800">Nut Detection System</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-600">Welcome, {{ user.first_name }} {{ user.last_name }}</span>
+                    <a href="/api/ml/logout/" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="text-3xl text-blue-500 mr-4">📊</div>
+                    <div>
+                        <p class="text-2xl font-bold text-gray-800">{{ total_detections }}</p>
+                        <p class="text-gray-600">Total Detections</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="text-3xl text-green-500 mr-4">✅</div>
+                    <div>
+                        <p class="text-2xl font-bold text-green-600">{{ passed_detections }}</p>
+                        <p class="text-gray-600">Passed</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="text-3xl text-red-500 mr-4">❌</div>
+                    <div>
+                        <p class="text-2xl font-bold text-red-600">{{ failed_detections }}</p>
+                        <p class="text-gray-600">Failed</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-lg shadow">
+                <div class="flex items-center">
+                    <div class="text-3xl text-purple-500 mr-4">📈</div>
+                    <div>
+                        <p class="text-2xl font-bold text-purple-600">{{ pass_rate|floatformat:1 }}%</p>
+                        <p class="text-gray-600">Pass Rate</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <a href="/api/ml/detect/" class="bg-blue-500 text-white p-6 rounded-lg hover:bg-blue-600 transition-colors text-center">
+                <div class="text-4xl mb-2">🔍</div>
+                <h3 class="text-lg font-semibold">New Detection</h3>
+                <p class="text-blue-100">Upload and analyze new images</p>
+            </a>
+            
+            <a href="/api/ml/history/" class="bg-green-500 text-white p-6 rounded-lg hover:bg-green-600 transition-colors text-center">
+                <div class="text-4xl mb-2">📋</div>
+                <h3 class="text-lg font-semibold">Detection History</h3>
+                <p class="text-green-100">View your past detections</p>
+            </a>
+            
+            <a href="/api/ml/" class="bg-purple-500 text-white p-6 rounded-lg hover:bg-purple-600 transition-colors text-center">
+                <div class="text-4xl mb-2">🌐</div>
+                <h3 class="text-lg font-semibold">Public Interface</h3>
+                <p class="text-purple-100">Use public detection tool</p>
+            </a>
+        </div>
+
+        <!-- Recent Detections -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Recent Detections</h2>
+            </div>
+            
+            <div class="p-6">
+                {% if detections %}
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 font-medium text-gray-700">Image</th>
+                                    <th class="text-left py-3 px-4 font-medium text-gray-700">Status</th>
+                                    <th class="text-left py-3 px-4 font-medium text-gray-700">Nuts</th>
+                                    <th class="text-left py-3 px-4 font-medium text-gray-700">Confidence</th>
+                                    <th class="text-left py-3 px-4 font-medium text-gray-700">Date</th>
+                                    <th class="text-left py-3 px-4 font-medium text-gray-700">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for detection in detections %}
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-3 px-4">
+                                        <div class="font-medium text-gray-800">{{ detection.image_name }}</div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <span class="px-2 py-1 rounded-full text-xs font-medium
+                                            {% if detection.detection_status == 'PASS' %}
+                                                bg-green-100 text-green-800
+                                            {% elif detection.detection_status == 'FAIL' %}
+                                                bg-red-100 text-red-800
+                                            {% else %}
+                                                bg-yellow-100 text-yellow-800
+                                            {% endif %}">
+                                            {{ detection.detection_status }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="text-sm text-gray-600">
+                                            <span class="text-green-600">{{ detection.present_nuts }} Present</span> /
+                                            <span class="text-red-600">{{ detection.missing_nuts }} Missing</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="text-sm text-gray-600">
+                                            {{ detection.confidence_score|floatformat:1 }}%
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="text-sm text-gray-600">
+                                            {{ detection.created_at|date:"M d, Y H:i" }}
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <a href="/api/ml/detection/{{ detection.id }}/" 
+                                           class="text-blue-500 hover:text-blue-600 text-sm font-medium">
+                                            View Details
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <a href="/api/ml/history/" 
+                           class="text-blue-500 hover:text-blue-600 font-medium">
+                            View All Detections →
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-8">
+                        <div class="text-6xl text-gray-400 mb-4">📷</div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-2">No detections yet</h3>
+                        <p class="text-gray-600 mb-4">Start by uploading your first image for nut detection</p>
+                        <a href="/api/ml/detect/" 
+                           class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                            Start Detection
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+</body>
+</html>

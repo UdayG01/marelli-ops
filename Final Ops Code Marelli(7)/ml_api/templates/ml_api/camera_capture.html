@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Capture - {{ image_id }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        .page-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .page-header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .logo-left {
+            order: 1;
+        }
+        
+        .logo-right {
+            order: 2;
+        }
+
+        /* Main Content Wrapper */
+        .main-wrapper {
+            flex: 1;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header .image-id {
+            font-size: 1.2em;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 25px;
+            padding: 25px;
+            min-height: 600px;
+        }
+
+        .video-section {
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+        }
+
+        .video-stream {
+            width: 100%;
+            height: auto;
+            max-height: 600px;
+            object-fit: contain;
+        }
+
+        .no-signal {
+            color: #e74c3c;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .workflow-progress {
+            background: #e3f2fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .workflow-progress h3 {
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 25px;
+        }
+
+        .control-group h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+        }
+
+        .button {
+            width: 100%;
+            padding: 15px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .capture-btn {
+            font-size: 1.4em;
+            padding: 20px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .capture-btn::after {
+            content: '📸';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.8em;
+        }
+
+        .status-display {
+            background: #ecf0f1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-connected {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .status-disconnected {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .processing-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notifications {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .notification {
+            background: white;
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3498db;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            border-left-color: #27ae60;
+        }
+
+        .notification.error {
+            border-left-color: #e74c3c;
+        }
+
+        .notification.warning {
+            border-left-color: #f39c12;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .trigger-processing {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .trigger-processing .spinner {
+            border-top-color: white;
+        }
+
+        /* Footer Styles */
+        .page-footer {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 25px 20px;
+            box-shadow: 0 -2px 20px rgba(0,0,0,0.1);
+            margin-top: auto;
+        }
+        
+        .page-footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+        
+        .footer-section h3 {
+            color: #1f2937;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .footer-section p {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .footer-section a {
+            color: #4f46e5;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-section a:hover {
+            color: #4338ca;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .page-header-content {
+                padding: 0 10px;
+            }
+            
+            .logo {
+                height: 40px;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .page-footer-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-header {
+                padding: 10px 15px;
+            }
+            
+            .logo {
+                height: 35px;
+            }
+            
+            .page-footer {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="page-header">
+        <div class="page-header-content">
+            <img src="{% static 'logo_folder/marellilogo.png' %}" alt="Marelli Logo" class="logo logo-left">
+            <img src="{% static 'logo_folder/Renatalogo.png' %}" alt="Renata IoT Logo" class="logo logo-right">
+        </div>
+    </header>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+        <div class="container">
+            <div class="header">
+                <h1>📸 Camera Capture</h1>
+                <div class="image-id">Image ID: {{ image_id }}</div>
+            </div>
+
+            <div class="main-content">
+                <div class="video-section">
+                    <img id="videoStream" class="video-stream" style="display: none;" alt="Camera Stream">
+                    <div id="noSignal" class="no-signal">
+                        <div>📷</div>
+                        <div>Camera Disconnected</div>
+                        <div style="font-size: 0.8em; margin-top: 10px;">Camera will connect automatically</div>
+                    </div>
+                </div>
+
+                <div class="controls-panel">
+                    <div class="workflow-progress">
+                        <h3>Ready to Capture</h3>
+                        <p>Image ID: <strong>{{ image_id }}</strong></p>
+                    </div>
+
+                    <div class="status-display">
+                        <div id="statusText" class="status-disconnected">Connecting to camera...</div>
+                    </div>
+
+                    {% if user.role == 'admin' %}
+                    <div class="control-group">
+                        <h3>Capture Image</h3>
+                        <button class="button capture-btn" id="captureBtn" onclick="captureAndProcess()" disabled>
+                            Capture & Process
+                        </button>
+                        <div style="font-size: 0.9em; color: #666; margin-top: 10px; text-align: center;">
+                            ⚡ Click to capture image and process automatically
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="control-group">
+                        <h3>🎯 Trigger Mode</h3>
+                        {% if user.role == 'admin' %}
+                        <button class="button btn-success" id="enableTriggerBtn" onclick="enableTriggerMode()" disabled style="display: none;">
+                            Enable Line 0 Trigger
+                        </button>
+                        <button class="button btn-danger" id="disableTriggerBtn" onclick="disableTriggerMode()" disabled style="display: block;">
+                            Disable Trigger Mode
+                        </button>
+                        {% else %}
+                        <div class="status-display">
+                            <div style="color: #27ae60; font-weight: bold;">
+                                🎯 Camera Connected - Trigger Mode Active
+                            </div>
+                            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                                Automatic capture enabled for Line 0 triggers
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div id="triggerStatus" style="font-size: 0.9em; color: #27ae60; margin-top: 10px; text-align: center; font-weight: bold;">
+                            🎯 Trigger Mode AUTO-ENABLED - Ready for Line 0 triggers
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Overlay for Manual Capture -->
+    {% if user.role == 'admin' %}
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="processing-content">
+            <div class="spinner"></div>
+            <h3>Processing Image...</h3>
+            <p id="processingMessage">Capturing image from camera...</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Enhanced Processing Overlay for Triggered Capture -->
+    <div class="processing-overlay" id="triggerProcessingOverlay">
+        <div class="processing-content trigger-processing">
+            <div class="spinner"></div>
+            <h3>🎯 Processing Triggered Image...</h3>
+            <p id="triggerProcessingMessage">Line 0 trigger detected - Processing image...</p>
+            <div style="margin-top: 20px; font-size: 0.9em;">
+                <span id="triggerCount">Trigger #0</span> | 
+                <span id="triggerTime">--:--:--</span>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.8em; opacity: 0.8;">
+                Auto-redirect after processing completes
+            </div>
+        </div>
+    </div>
+
+    <div class="notifications" id="notifications"></div>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <div class="page-footer-content">
+            <div class="footer-section">
+                <h3>Contact Information</h3>
+                <p><strong>Anil Sagar</strong></p>
+                <p><a href="mailto:anil.sagar@renataiot.com">anil.sagar@renataiot.com</a></p>
+            </div>
+            <div class="footer-section">
+                <h3>Online Presence</h3>
+                <p><a href="https://renataiot.com" target="_blank">https://renataiot.com</a></p>
+                <p><a href="https://www.linkedin.com/in/sagaranil" target="_blank">LinkedIn Profile</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const imageId = '{{ image_id }}';
+        let isConnected = false;
+        let lastTriggerCount = 0;
+        let isProcessingTrigger = false;
+
+        // **NEW: Session management variables**
+        let sessionTriggerBaseline = {{ session_trigger_baseline|default:0 }};
+        let lastKnownTriggerCount = sessionTriggerBaseline;
+        let sessionImageId = '{{ image_id }}';
+
+        console.log(`[SESSION] Camera capture session initialized:`);
+        console.log(`[SESSION]   Image ID: ${sessionImageId}`);
+        console.log(`[SESSION]   Trigger baseline: ${sessionTriggerBaseline}`);
+        console.log(`[SESSION]   Last known count: ${lastKnownTriggerCount}`);
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing camera interface...');
+            connectCamera();
+            setInterval(refreshStatus, 3000);  // Status every 3 seconds
+        });
+
+        // Utility functions
+        function showNotification(message, type = 'info') {
+            console.log(`📢 ${type}: ${message}`);
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `<strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}`;
+            document.getElementById('notifications').appendChild(notification);
+            setTimeout(() => {
+                notification.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        function updateUI(connected, triggerStatus = null) {
+            isConnected = connected;
+            const statusText = document.getElementById('statusText');
+            const captureBtn = document.getElementById('captureBtn');
+            const videoStream = document.getElementById('videoStream');
+            const noSignal = document.getElementById('noSignal');
+            const enableTriggerBtn = document.getElementById('enableTriggerBtn');
+            const disableTriggerBtn = document.getElementById('disableTriggerBtn');
+            const triggerStatusDiv = document.getElementById('triggerStatus');
+            
+            if (connected) {
+                statusText.textContent = 'Camera Connected - Ready to Capture';
+                statusText.className = 'status-connected';
+                
+                {% if user.role == 'admin' %}
+                captureBtn.disabled = false;
+                enableTriggerBtn.disabled = false;
+                {% endif %}
+                
+                videoStream.src = `/api/ml/camera/stream/?t=${Date.now()}`;
+                videoStream.style.display = 'block';
+                noSignal.style.display = 'none';
+                if (triggerStatus) updateTriggerUI(triggerStatus);
+                } else {
+                    statusText.textContent = 'Camera Disconnected';
+                    statusText.className = 'status-disconnected';
+                    {% if user.role == 'admin' %}
+                    captureBtn.disabled = true;
+                    enableTriggerBtn.disabled = true;
+                    disableTriggerBtn.disabled = true;
+                    videoStream.style.display = 'none';
+                    noSignal.style.display = 'block';
+                    {% endif %}
+                    enableTriggerBtn.style.display = 'none';
+                    disableTriggerBtn.style.display = 'block';
+                    triggerStatusDiv.innerHTML = '🎯 Trigger Mode will auto-enable when camera connects';
+                }
+        }
+
+        function updateTriggerUI(triggerStatus) {
+            const enableTriggerBtn = document.getElementById('enableTriggerBtn');
+            const disableTriggerBtn = document.getElementById('disableTriggerBtn');
+            const triggerStatusDiv = document.getElementById('triggerStatus');
+            
+            {% if user.role == 'admin' %}
+            if (triggerStatus.is_trigger_mode) {
+                enableTriggerBtn.style.display = 'none';
+                disableTriggerBtn.style.display = 'block';
+                disableTriggerBtn.disabled = false;
+                let statusText = `🎯 Trigger Mode ACTIVE`;
+                if (triggerStatus.trigger_count > 0) {
+                    statusText += ` | Triggers: ${triggerStatus.trigger_count}`;
+                }
+                if (triggerStatus.last_trigger_time) {
+                    const time = new Date(triggerStatus.last_trigger_time).toLocaleTimeString();
+                    statusText += ` | Last: ${time}`;
+                }
+                triggerStatusDiv.innerHTML = statusText;
+            } else {
+                enableTriggerBtn.style.display = 'block';
+                disableTriggerBtn.style.display = 'none';
+                enableTriggerBtn.disabled = !isConnected;
+                triggerStatusDiv.innerHTML = '🔧 Manual capture mode - Click "Enable Line 0 Trigger" to auto-capture';
+            }
+            {% else %}
+            // Operator view - just update status text
+            let statusText = `🎯 Trigger Mode ACTIVE`;
+            if (triggerStatus.trigger_count > 0) {
+                statusText += ` | Triggers: ${triggerStatus.trigger_count}`;
+            }
+            if (triggerStatus.last_trigger_time) {
+                const time = new Date(triggerStatus.last_trigger_time).toLocaleTimeString();
+                statusText += ` | Last: ${time}`;
+            }
+            triggerStatusDiv.innerHTML = statusText;
+            {% endif %}
+        }
+
+        // Trigger Mode Functions
+        async function enableTriggerMode() {
+            if (!isConnected) {
+                showNotification('Camera not connected!', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/api/ml/camera/trigger/enable/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')}
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('Trigger mode enabled! Camera will automatically capture on Line 0 signal.', 'success');
+                    updateTriggerUI(data.trigger_status);
+                } else {
+                    showNotification(`Failed to enable trigger mode: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showNotification(`Error enabling trigger mode: ${error.message}`, 'error');
+            }
+        }
+
+        // 🆕 NEW: Auto-enable trigger mode on camera connection
+        async function autoEnableTriggerMode() {
+            if (!isConnected) {
+                console.log('🎯 Cannot auto-enable trigger - camera not connected');
+                return;
+            }
+            
+            try {
+                console.log('🎯 Auto-enabling trigger mode...');
+                const response = await fetch('/api/ml/camera/trigger/enable/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')}
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('✅ Trigger mode auto-enabled successfully');
+                    updateTriggerUI(data.trigger_status);
+                    showNotification('🎯 Trigger mode automatically enabled - Ready for Line 0 triggers!', 'success');
+                } else {
+                    console.log(`❌ Auto-enable trigger failed: ${data.message}`);
+                    showNotification(`Failed to auto-enable trigger mode: ${data.message}`, 'warning');
+                }
+            } catch (error) {
+                console.error('Auto-enable trigger error:', error);
+                showNotification(`Auto-enable trigger error: ${error.message}`, 'warning');
+            }
+        }
+
+        async function disableTriggerMode() {
+            if (!isConnected) {
+                showNotification('Camera not connected!', 'error');
+                return;
+            }
+            try {
+                const response = await fetch('/api/ml/camera/trigger/disable/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')}
+                });
+                const data = await response.json();
+                if (data.success) {
+                    showNotification('Trigger mode disabled. Camera switched to manual capture mode.', 'success');
+                    updateTriggerUI(data.trigger_status);
+                } else {
+                    showNotification(`Failed to disable trigger mode: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showNotification(`Error disabling trigger mode: ${error.message}`, 'error');
+            }
+        }
+
+        async function connectCamera() {
+            try {
+                const response = await fetch('/api/ml/camera/connect/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')}
+                });
+                const data = await response.json();
+                updateUI(data.connected);
+                if (!data.success) {
+                    setTimeout(connectCamera, 3000);
+                } else {
+                    console.log('✅ Camera connected successfully');
+                // 🆕 AUTO-ENABLE trigger mode on connection
+                    setTimeout(async () => {
+                        await autoEnableTriggerMode();
+                        refreshStatus();
+                    }, 1000);
+                }
+            } catch (error) {
+                console.error('Camera connection error:', error);
+                updateUI(false);
+                setTimeout(connectCamera, 3000);
+            }
+        }
+        
+        {% if user.role == 'admin' %}
+        async function captureAndProcess() {
+            if (!isConnected) {
+                showNotification('Camera not connected!', 'error');
+                return;
+            }
+            console.log('🔄 Starting manual capture and process...');
+            document.getElementById('processingOverlay').style.display = 'flex';
+            document.getElementById('processingMessage').textContent = 'Capturing image...';
+
+            try {
+                const response = await fetch('/api/ml/camera/capture-and-process/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+                    body: JSON.stringify({image_id: imageId})
+                });
+                const data = await response.json();
+                console.log('📷 Manual capture response:', data);
+
+                if (data.success) {
+                    document.getElementById('processingMessage').textContent = 'Processing completed successfully!';
+                    setTimeout(() => {
+                        document.getElementById('processingOverlay').style.display = 'none';
+                        showNotification('Image captured and processed successfully! 📸', 'success');
+                        const redirectImageId = data.image_id || imageId;
+                        console.log(`🔄 Manual redirect: /api/ml/results/?image_id=${redirectImageId}`);
+                        window.location.href = `/api/ml/results/?image_id=${redirectImageId}`;
+                    }, 1000);
+                } else {
+                    document.getElementById('processingOverlay').style.display = 'none';
+                    const errorMsg = data.error || data.message || 'Unknown error occurred';
+                    showNotification(`Processing failed: ${errorMsg}`, 'error');
+                }
+            } catch (error) {
+                console.error('Manual capture error:', error);
+                document.getElementById('processingOverlay').style.display = 'none';
+                showNotification(`Error: ${error.message}`, 'error');
+            }
+        }
+        {% endif %}
+
+        // **MODIFIED: Enhanced refresh status with session awareness**
+        async function refreshStatus() {
+            try {
+                const response = await fetch('/api/ml/camera/status/');
+                const data = await response.json();
+                
+                if (data.connected !== isConnected) {
+                    updateUI(data.connected, data);
+                } else if (data.connected && (data.is_trigger_mode !== undefined)) {
+                    updateTriggerUI(data);
+                }
+                
+                // **MODIFIED: Only check for NEW triggers since session started**
+                if (data.trigger_count && data.trigger_count > lastKnownTriggerCount && !isProcessingTrigger) {
+                    console.log(`[SESSION] NEW TRIGGERS DETECTED: ${lastKnownTriggerCount + 1} to ${data.trigger_count}`);
+                    console.log(`[SESSION] Session baseline: ${sessionTriggerBaseline}, Current: ${data.trigger_count}`);
+                    
+                    // **NEW: Only process triggers that are truly new in this session**
+                    for (let i = Math.max(lastKnownTriggerCount + 1, sessionTriggerBaseline + 1); i <= data.trigger_count; i++) {
+                        console.log(`[SESSION] Processing NEW session trigger #${i}...`);
+                        checkNewTriggerCaptured(i);
+                    }
+                    lastKnownTriggerCount = data.trigger_count;
+                }
+                
+            } catch (error) {
+                console.error('Status refresh error:', error);
+            }
+        }
+
+        // **NEW: Enhanced trigger captured check with session validation**
+        async function checkNewTriggerCaptured(triggerCount) {
+            try {
+                // **NEW: Verify this is a new session trigger**
+                if (triggerCount <= sessionTriggerBaseline) {
+                    console.log(`[SESSION] Skipping old trigger #${triggerCount} (baseline: ${sessionTriggerBaseline})`);
+                    return;
+                }
+                
+                const response = await fetch(`/api/ml/camera/trigger-result-status/${triggerCount}/`);
+                const data = await response.json();
+                
+                // Check if image was captured
+                if (data.success && data.captured && data.image_id) {
+                    console.log(`[SESSION] NEW SESSION TRIGGER #${triggerCount} CAPTURED! Image ID: ${data.image_id}`);
+                    
+                    // **NEW: Verify image_id matches current session**
+                    if (!data.image_id.includes(sessionImageId) && !data.image_id.startsWith('triggered_capture_')) {
+                        console.log(`[SESSION] Image ID mismatch - ignoring trigger #${triggerCount}`);
+                        return;
+                    }
+                    
+                    // Show overlay immediately when image is captured
+                    if (!isProcessingTrigger) {
+                        isProcessingTrigger = true;
+                        document.getElementById('triggerProcessingOverlay').style.display = 'flex';
+                        document.getElementById('triggerProcessingMessage').textContent = `Processing captured image ${data.image_id}...`;
+                        document.getElementById('triggerTime').textContent = new Date().toLocaleTimeString();
+                        showNotification(`🎯 Trigger #${triggerCount} captured! Processing with RenataAI Vision model...`, 'success');
+                    }
+                    
+                    // Start monitoring this trigger for completion
+                    monitorTriggerProcessing(triggerCount, data.image_id);
+                }
+                
+            } catch (error) {
+                console.error(`Error checking trigger #${triggerCount} capture:`, error);
+            }
+        }
+
+        // NEW: Monitor specific trigger for processing completion
+        async function monitorTriggerProcessing(triggerCount, imageId) {
+            let attempts = 0;
+            const maxAttempts = 60; // 60 seconds timeout
+            
+            console.log(`🔄 Monitoring trigger #${triggerCount} processing...`);
+            
+            const checkInterval = setInterval(async () => {
+                attempts++;
+                try {
+                    const response = await fetch(`/api/ml/camera/trigger-result-status/${triggerCount}/`);
+                    const data = await response.json();
+                    
+                    console.log(`🔍 Trigger #${triggerCount} - Attempt ${attempts}: processing=${data.processing}, complete=${data.processing_complete}`);
+                    
+                    // Update processing message
+                    if (data.processing && !data.processing_complete) {
+                        document.getElementById('triggerProcessingMessage').textContent = `RenataAI model processing ${imageId}...`;
+                    }
+                    
+                    // Check if processing is complete
+                    if (data.processing_complete) {
+                        clearInterval(checkInterval);
+                        
+                        console.log(`✅ TRIGGER #${triggerCount} PROCESSING COMPLETED!`);
+                        
+                        // Hide overlay
+                        document.getElementById('triggerProcessingOverlay').style.display = 'none';
+                        isProcessingTrigger = false;
+                        
+                        if (data.error) {
+                            showNotification(`⚠️ Trigger #${triggerCount} failed: ${data.error}`, 'error');
+                        } else {
+                            showNotification(`🎯 Processing completed! Redirecting to results...`, 'success');
+                            
+                            // Use the image_id from the response
+                            const redirectImageId = data.image_id || imageId;
+                            
+                            console.log(`🔄 REDIRECTING TO: /api/ml/results/?image_id=${redirectImageId}`);
+                            
+                            // Redirect after short delay
+                            setTimeout(() => {
+                                window.location.href = `/api/ml/results/?image_id=${redirectImageId}`;
+                            }, 1000);
+                        }
+                    } else if (attempts >= maxAttempts) {
+                        // Timeout handling
+                        clearInterval(checkInterval);
+                        console.log(`⏱️ Timeout for trigger #${triggerCount} processing`);
+                        
+                        document.getElementById('triggerProcessingOverlay').style.display = 'none';
+                        isProcessingTrigger = false;
+                        showNotification(`⏱️ Processing timeout for trigger #${triggerCount}`, 'warning');
+                    }
+                    
+                } catch (error) {
+                    console.error(`Error monitoring trigger #${triggerCount}:`, error);
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        document.getElementById('triggerProcessingOverlay').style.display = 'none';
+                        isProcessingTrigger = false;
+                        showNotification(`Error monitoring trigger #${triggerCount}: ${error.message}`, 'error');
+                    }
+                }
+            }, 1000); // Check every 1 second
+        }
+
+        // Enhanced function to handle redirect with finalization
+        async function redirectToImageIdEntry(imageId, overallResult) {
+            try {
+                console.log(`🔄 Finalizing inspection before redirect: ${imageId} -> ${overallResult}`);
+                
+                // Call finalization endpoint
+                const response = await fetch('/api/ml/finalize-triggered-inspection/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        image_id: imageId,
+                        overall_result: overallResult
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log(`✅ Inspection finalized: ${data.final_location}`);
+                    showNotification(`📁 Inspection moved to final location: ${data.final_location}`, 'success');
+                } else {
+                    console.error(`❌ Finalization failed: ${data.error}`);
+                    showNotification(`⚠️ Finalization warning: ${data.error}`, 'warning');
+                }
+                
+                // Redirect to image_id_entry regardless of finalization result
+                setTimeout(() => {
+                    window.location.href = '/api/ml/image-id/';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Finalization error:', error);
+                showNotification(`Error during finalization: ${error.message}`, 'error');
+                
+                // Still redirect even if finalization fails
+                setTimeout(() => {
+                    window.location.href = '/api/ml/image-id/';
+                }, 1500);
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // **NEW: Reset trigger session function**
+        async function resetTriggerSession() {
+            try {
+                console.log('[RESET] Manually resetting trigger session...');
+                
+                const response = await fetch('/api/ml/camera/reset-session/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')}
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    sessionTriggerBaseline = data.current_trigger_count;
+                    lastKnownTriggerCount = sessionTriggerBaseline;
+                    
+                    showNotification('🔄 Trigger session reset successfully!', 'success');
+                    console.log(`[RESET] New baseline: ${sessionTriggerBaseline}`);
+                } else {
+                    showNotification(`❌ Reset failed: ${data.message}`, 'error');
+                }
+                
+            } catch (error) {
+                showNotification(`❌ Reset error: ${error.message}`, 'error');
+            }
+        }
+
+        document.getElementById('videoStream').onerror = function() {
+            if (isConnected) {
+                setTimeout(() => {
+                    this.src = `/api/ml/camera/stream/?t=${Date.now()}`;
+                }, 2000);
+            }
+        };
+
+    // window.onload = function() {
+    //     console.log("RELOADING CAMERA CAPTURE PAGE TO ENSURE FRESH CONNECTION WITH HIKVISION CAMERA")
+    //     window.location.reload();
+    // };
+
+  
+    // window.onload = function() {
+    //     if (!sessionStorage.getItem("alreadyReloaded")) {
+    //         sessionStorage.setItem("alreadyReloaded", "true");
+    //         console.log("RELOADING CAMERA CAPTURE PAGE TO ENSURE FRESH CONNECTION WITH HIKVISION CAMERA");
+    //         setTimeout(function() {
+    //             window.location.reload();
+    //         }, 1000); // wait 1 sec
+    //     }
+    // };
+
+    
+    window.onload = function() {
+        if (!sessionStorage.getItem("reloadTriggered")) {
+            sessionStorage.setItem("reloadTriggered", "true");
+            setTimeout(function() {
+                window.location.reload();
+            }, 1000);
+        }; 
+    };
+        
+        
+    // else {
+    //     //     alert("This page was reloaded once already!");
+    //     // }
+    // };
+
+
+    </script>
+</body>
+</html>
